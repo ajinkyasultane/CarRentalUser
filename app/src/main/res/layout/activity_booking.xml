@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <!-- Car Image -->
+        <ImageView
+            android:id="@+id/image_car"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop" />
+
+        <!-- Car Info -->
+        <TextView
+            android:id="@+id/text_car_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Car Name"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:paddingTop="8dp" />
+
+        <TextView
+            android:id="@+id/text_car_price"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Price / day"
+            android:textColor="@android:color/holo_green_dark"
+            android:textSize="16sp" />
+
+        <!-- Date pickers -->
+        <EditText
+            android:id="@+id/edit_start_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Start Date"
+            android:focusable="false"
+            android:inputType="none"
+            android:drawableEnd="@android:drawable/ic_menu_my_calendar"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/edit_end_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="End Date"
+            android:focusable="false"
+            android:inputType="none"
+            android:drawableEnd="@android:drawable/ic_menu_my_calendar" />
+
+        <!-- Pickup Location -->
+        <EditText
+            android:id="@+id/edit_pickup_location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Pickup Location"
+            android:layout_marginTop="16dp" />
+
+        <!-- Button -->
+        <Button
+            android:id="@+id/button_proceed_to_payment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Proceed to Payment"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="@android:color/holo_blue_dark"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+</ScrollView>
