@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "202762767764",
+    "project_id": "carrentaluser",
+    "storage_bucket": "carrentaluser.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:202762767764:android:30ffa4169af99be3351381",
+        "android_client_info": {
+          "package_name": "com.example.carrentaluser"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBY-UUNXwnUFn9_TopE8uXe376s6QqqfIU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
