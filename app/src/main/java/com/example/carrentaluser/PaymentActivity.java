@@ -1,3 +1,4 @@
+/*
 package com.example.carrentaluser;
 
 import android.os.Bundle;
@@ -8,7 +9,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.carrentaluser.models.BookingModel;
-import com.example.carrentaluser.models.CarModel;
+import com.example.carrentaluser.models.Car;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -24,7 +25,7 @@ public class PaymentActivity extends AppCompatActivity {
     Button confirmPaymentButton;
 
     String carId, startDateStr, endDateStr, pickupLocation;
-    CarModel selectedCar;
+    Car selectedCar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,7 +43,7 @@ public class PaymentActivity extends AppCompatActivity {
         pickupLocation = getIntent().getStringExtra("pickupLocation");
 
         // Mock Car data (Replace this with real car data from Firebase or intent)
-        selectedCar = new CarModel(carId, "Swift Dzire", 1200, "https://example.com/swift.jpg");
+        selectedCar = new Car(carId, "Swift Dzire", 1200, "https://example.com/swift.jpg");
 
         summaryText.setText(
                 "Car: " + selectedCar.getName() + "\n" +
@@ -105,3 +106,4 @@ public class PaymentActivity extends AppCompatActivity {
         }
     }
 }
+*/

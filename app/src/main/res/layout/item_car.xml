@@ -1,39 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    android:elevation="4dp">
+    android:orientation="horizontal"
+    android:padding="16dp"
+    android:layout_marginBottom="10dp"
+    android:background="?android:attr/selectableItemBackground" >
+
+    <ImageView
+        android:id="@+id/carImageView"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/placeholder_car" />
 
     <LinearLayout
         android:orientation="vertical"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:padding="8dp">
-
-        <ImageView
-            android:id="@+id/car_image"
-            android:layout_width="match_parent"
-            android:layout_height="120dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/ic_launcher_background" />
+        android:layout_weight="1"
+        android:paddingStart="16dp" >
 
         <TextView
-            android:id="@+id/car_name"
-            android:layout_width="match_parent"
+            android:id="@+id/carNameTextView"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="8dp"
             android:text="Car Name"
             android:textStyle="bold"
             android:textSize="16sp" />
 
         <TextView
-            android:id="@+id/car_price"
-            android:layout_width="match_parent"
+            android:id="@+id/priceTextView"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="₹1000/day"
-            android:textSize="14sp"
-            android:textColor="@android:color/holo_blue_dark" />
+            android:text="Price: 0 / day"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/availableQuantityTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Available: 0"
+            android:textSize="14sp" />
     </LinearLayout>
 
-</androidx.cardview.widget.CardView>
+    <Button
+        android:id="@+id/bookNowButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Book Now" />
+</LinearLayout>

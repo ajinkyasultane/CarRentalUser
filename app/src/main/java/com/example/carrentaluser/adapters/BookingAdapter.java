@@ -5,21 +5,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.carrentaluser.R;
-import com.example.carrentaluser.models.BookingModel;
+import com.example.carrentaluser.models.Booking;
+import com.example.carrentaluser.models.Booking;
 
 import java.util.List;
 
 public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingViewHolder> {
 
     private Context context;
-    private List<BookingModel> bookingList;
+    private List<Booking> bookingList;
 
-    public BookingAdapter(Context context, List<BookingModel> bookingList) {
+    public BookingAdapter(Context context, List<Booking> bookingList) {
         this.context = context;
         this.bookingList = bookingList;
     }
@@ -32,7 +32,7 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingV
 
     @Override
     public void onBindViewHolder(BookingViewHolder holder, int position) {
-        BookingModel booking = bookingList.get(position);
+        Booking booking = bookingList.get(position);
 
         holder.carNameTextView.setText(booking.getCarName());
         holder.startDateTextView.setText("From: " + booking.getStartDate());
@@ -55,9 +55,9 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingV
         public BookingViewHolder(View itemView) {
             super(itemView);
             carNameTextView = itemView.findViewById(R.id.text_car_name);
-            startDateTextView = itemView.findViewById(R.id.text_start_date);
-            endDateTextView = itemView.findViewById(R.id.text_end_date);
-            statusTextView = itemView.findViewById(R.id.text_status);
+            startDateTextView = itemView.findViewById(R.id.startDateTextView);
+            endDateTextView = itemView.findViewById(R.id.endDateTextView);
+            statusTextView = itemView.findViewById(R.id.statusTextView);
         }
     }
 }

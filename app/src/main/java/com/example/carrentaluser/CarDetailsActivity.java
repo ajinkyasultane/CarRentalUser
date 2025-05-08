@@ -1,4 +1,4 @@
-package com.example.carrentaluser;
+/*package com.example.carrentaluser;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -48,3 +48,4 @@ public class CarDetailsActivity extends AppCompatActivity {
         });
     }
 }
+*/
