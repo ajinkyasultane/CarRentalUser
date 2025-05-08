@@ -24,4 +24,13 @@
         android:padding="8dp"
         android:clipToPadding="false"
         android:scrollbars="vertical"/>
+
+    <ProgressBar
+        android:id="@+id/bookingProgressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone"
+        />
+
 </LinearLayout>

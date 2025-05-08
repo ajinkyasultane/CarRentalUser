@@ -1,64 +1,61 @@
 package com.example.carrentaluser.models;
 
 public class Car {
-
     private String carId;
     private String carName;
-    private String carImage;
-    private int pricePerDay;
+    private String carImageUrl;
     private int availableQuantity;
+    private double pricePerDay;
 
-    // Empty constructor for Firestore
     public Car() {
+        // Firestore requires empty constructor
     }
 
-    // Constructor
-    public Car(String carId, String carName, String carImage, int pricePerDay, int availableQuantity) {
+    public Car(String carId, String carName, String carImageUrl, int availableQuantity, double pricePerDay) {
         this.carId = carId;
         this.carName = carName;
-        this.carImage = carImage;
-        this.pricePerDay = pricePerDay;
+        this.carImageUrl = carImageUrl;
         this.availableQuantity = availableQuantity;
+        this.pricePerDay = pricePerDay;
     }
 
-    // Getters and Setters
     public String getCarId() {
         return carId;
-    }
-
-    public void setCarId(String carId) {
-        this.carId = carId;
     }
 
     public String getCarName() {
         return carName;
     }
 
-    public void setCarName(String carName) {
-        this.carName = carName;
-    }
-
-    public String getCarImage() {
-        return carImage;
-    }
-
-    public void setCarImage(String carImage) {
-        this.carImage = carImage;
-    }
-
-    public int getPricePerDay() {
-        return pricePerDay;
-    }
-
-    public void setPricePerDay(int pricePerDay) {
-        this.pricePerDay = pricePerDay;
+    public String getCarImageUrl() {
+        return carImageUrl;
     }
 
     public int getAvailableQuantity() {
         return availableQuantity;
     }
 
+    public double getPricePerDay() {
+        return pricePerDay;
+    }
+
+    public void setCarId(String carId) {
+        this.carId = carId;
+    }
+
+    public void setCarName(String carName) {
+        this.carName = carName;
+    }
+
+    public void setCarImageUrl(String carImageUrl) {
+        this.carImageUrl = carImageUrl;
+    }
+
     public void setAvailableQuantity(int availableQuantity) {
         this.availableQuantity = availableQuantity;
+    }
+
+    public void setPricePerDay(double pricePerDay) {
+        this.pricePerDay = pricePerDay;
     }
 }

@@ -1,72 +1,82 @@
 package com.example.carrentaluser.fragments;
 
 import android.os.Bundle;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
-import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.carrentaluser.R;
-import com.example.carrentaluser.adapters.BookingAdapter;
+import com.example.carrentaluser.adapter.BookingAdapter;
 import com.example.carrentaluser.models.Booking;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class BookingFragment extends Fragment {
 
-    private RecyclerView bookingRecyclerView;
+    private RecyclerView recyclerView;
+    private ProgressBar progressBar;
     private List<Booking> bookingList;
     private BookingAdapter bookingAdapter;
-    private FirebaseFirestore db;
 
-    public BookingFragment() {
-        // Required empty public constructor
-    }
+    private FirebaseFirestore firestore;
+    private FirebaseAuth auth;
 
+    public BookingFragment() {}
+
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_booking, container, false);
 
-        bookingRecyclerView = view.findViewById(R.id.bookingRecyclerView);
-        bookingRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerView = view.findViewById(R.id.bookingRecyclerView);
+        progressBar = view.findViewById(R.id.bookingProgressBar);
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         bookingList = new ArrayList<>();
         bookingAdapter = new BookingAdapter(getContext(), bookingList);
+        recyclerView.setAdapter(bookingAdapter);
 
-        bookingRecyclerView.setAdapter(bookingAdapter);
+        firestore = FirebaseFirestore.getInstance();
+        auth = FirebaseAuth.getInstance();
 
-        db = FirebaseFirestore.getInstance();
-        fetchUserBookings();
+        loadBookings();
 
         return view;
     }
 
-    private void fetchUserBookings() {
-        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        db.collection("bookings")
+    private void loadBookings() {
+        progressBar.setVisibility(View.VISIBLE);
+        String userId = auth.getCurrentUser().getUid();
+
+        firestore.collection("bookings")
                 .whereEqualTo("userId", userId)
                 .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    if (queryDocumentSnapshots != null) {
-                        for (QueryDocumentSnapshot documentSnapshot : queryDocumentSnapshots) {
-                            Booking booking = documentSnapshot.toObject(Booking.class);
+                .addOnCompleteListener(task -> {
+                    progressBar.setVisibility(View.GONE);
+                    if (task.isSuccessful()) {
+                        bookingList.clear();
+                        for (QueryDocumentSnapshot doc : task.getResult()) {
+                            Booking booking = doc.toObject(Booking.class);
                             bookingList.add(booking);
                         }
-
                         bookingAdapter.notifyDataSetChanged();
+                    } else {
+                        Toast.makeText(getContext(), "Failed to load bookings", Toast.LENGTH_SHORT).show();
                     }
-                })
-                .addOnFailureListener(e -> {
-                    // Handle the error
                 });
     }
 }

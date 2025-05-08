@@ -1,4 +1,4 @@
-package com.example.carrentaluser.adapters;
+package com.example.carrentaluser.adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -21,16 +21,16 @@ public class CarAdapter extends RecyclerView.Adapter<CarAdapter.CarViewHolder> {
 
     private Context context;
     private List<Car> carList;
-    private OnBookClickListener onBookClickListener;
+    private OnBookClickListener listener;
 
     public interface OnBookClickListener {
         void onBookClick(Car car);
     }
 
-    public CarAdapter(Context context, List<Car> carList, OnBookClickListener onBookClickListener) {
+    public CarAdapter(Context context, List<Car> carList, OnBookClickListener listener) {
         this.context = context;
         this.carList = carList;
-        this.onBookClickListener = onBookClickListener;
+        this.listener = listener;
     }
 
     @NonNull
@@ -44,12 +44,12 @@ public class CarAdapter extends RecyclerView.Adapter<CarAdapter.CarViewHolder> {
     public void onBindViewHolder(@NonNull CarViewHolder holder, int position) {
         Car car = carList.get(position);
         holder.carNameTextView.setText(car.getCarName());
-        holder.priceTextView.setText("Price: " + car.getPricePerDay() + " / day");
-        holder.availableQuantityTextView.setText("Available: " + car.getAvailableQuantity());
+        holder.carPriceTextView.setText("₹" + car.getPricePerDay() + " / day");
+        holder.carQuantityTextView.setText("Available: " + car.getAvailableQuantity());
 
-        Glide.with(context).load(car.getCarImage()).into(holder.carImageView);
+        Glide.with(context).load(car.getCarImageUrl()).into(holder.carImageView);
 
-        holder.bookNowButton.setOnClickListener(v -> onBookClickListener.onBookClick(car));
+        holder.bookButton.setOnClickListener(v -> listener.onBookClick(car));
     }
 
     @Override
@@ -57,19 +57,18 @@ public class CarAdapter extends RecyclerView.Adapter<CarAdapter.CarViewHolder> {
         return carList.size();
     }
 
-    public static class CarViewHolder extends RecyclerView.ViewHolder {
-
+    static class CarViewHolder extends RecyclerView.ViewHolder {
         ImageView carImageView;
-        TextView carNameTextView, priceTextView, availableQuantityTextView;
-        Button bookNowButton;
+        TextView carNameTextView, carPriceTextView, carQuantityTextView;
+        Button bookButton;
 
         public CarViewHolder(@NonNull View itemView) {
             super(itemView);
             carImageView = itemView.findViewById(R.id.carImageView);
             carNameTextView = itemView.findViewById(R.id.carNameTextView);
-            priceTextView = itemView.findViewById(R.id.priceTextView);
-            availableQuantityTextView = itemView.findViewById(R.id.availableQuantityTextView);
-            bookNowButton = itemView.findViewById(R.id.bookNowButton);
+            carPriceTextView = itemView.findViewById(R.id.carPriceTextView);
+            carQuantityTextView = itemView.findViewById(R.id.carQuantityTextView);
+            bookButton = itemView.findViewById(R.id.bookButton);
         }
     }
 }
