@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "202762767764",
-    "project_id": "carrentaluser",
-    "storage_bucket": "carrentaluser.firebasestorage.app"
+    "project_number": "623469559201",
+    "project_id": "carrental-2116c",
+    "storage_bucket": "carrental-2116c.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:202762767764:android:30ffa4169af99be3351381",
+        "mobilesdk_app_id": "1:623469559201:android:940f8249a2002e535a9fe0",
         "android_client_info": {
           "package_name": "com.example.carrentaluser"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBY-UUNXwnUFn9_TopE8uXe376s6QqqfIU"
+          "current_key": "AIzaSyDZuJtJr8YvR8-zLuTihA5Xe5PGgq_WFFo"
         }
       ],
       "services": {
@@ -23,6 +23,53 @@
           "other_platform_oauth_client": []
         }
       }
+    },{
+      "project_info": {
+        "project_number": "623469559201",
+        "project_id": "carrental-2116c",
+        "storage_bucket": "carrental-2116c.firebasestorage.app"
+      },
+      "client": [
+        {
+          "client_info": {
+            "mobilesdk_app_id": "1:623469559201:android:f6276a4391162c0c5a9fe0",
+            "android_client_info": {
+              "package_name": "com.example.carrentaladmin"
+            }
+          },
+          "oauth_client": [],
+          "api_key": [
+            {
+              "current_key": "AIzaSyDZuJtJr8YvR8-zLuTihA5Xe5PGgq_WFFo"
+            }
+          ],
+          "services": {
+            "appinvite_service": {
+              "other_platform_oauth_client": []
+            }
+          }
+        },
+        {
+          "client_info": {
+            "mobilesdk_app_id": "1:623469559201:android:940f8249a2002e535a9fe0",
+            "android_client_info": {
+              "package_name": "com.example.carrentaluser"
+            }
+          },
+          "oauth_client": [],
+          "api_key": [
+            {
+              "current_key": "AIzaSyDZuJtJr8YvR8-zLuTihA5Xe5PGgq_WFFo"
+            }
+          ],
+          "services": {
+            "appinvite_service": {
+              "other_platform_oauth_client": []
+            }
+          }
+        }
+      ],
+      "configuration_version": "1"
     }
   ],
   "configuration_version": "1"

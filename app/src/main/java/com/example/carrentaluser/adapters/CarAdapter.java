@@ -1,4 +1,4 @@
-package com.example.carrentaluser.adapter;
+package com.example.carrentaluser.adapters;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -45,9 +45,15 @@ public class CarAdapter extends RecyclerView.Adapter<CarAdapter.CarViewHolder> {
         Car car = carList.get(position);
         holder.carNameTextView.setText(car.getCarName());
         holder.carPriceTextView.setText("₹" + car.getPricePerDay() + " / day");
-        holder.carQuantityTextView.setText("Available: " + car.getAvailableQuantity());
+      //  holder.carQuantityTextView.setText("Available: " + car.getAvailableQuantity());
 
-        Glide.with(context).load(car.getCarImageUrl()).into(holder.carImageView);
+     //   Glide.with(context).load(car.getCarImageUrl()).into(holder.carImageView);
+
+        Glide.with(context)
+                .load(car.getCarImageUrl())
+                .placeholder(R.drawable.placeholder_car)
+                .error(R.drawable.placeholder_car)
+                .into(holder.carImageView);
 
         holder.bookButton.setOnClickListener(v -> listener.onBookClick(car));
     }

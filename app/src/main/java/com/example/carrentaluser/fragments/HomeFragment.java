@@ -17,7 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.carrentaluser.BookCarActivity;
 import com.example.carrentaluser.R;
-import com.example.carrentaluser.adapter.CarAdapter;
+import com.example.carrentaluser.adapters.CarAdapter;
 import com.example.carrentaluser.models.Car;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
