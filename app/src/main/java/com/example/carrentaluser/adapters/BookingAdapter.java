@@ -1,6 +1,5 @@
-package com.example.carrentaluser.adapter;
+package com.example.carrentaluser.adapters;
 
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -9,57 +8,55 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.bumptech.glide.Glide;
 import com.example.carrentaluser.R;
 import com.example.carrentaluser.models.Booking;
 
 import java.util.List;
 
-public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.BookingViewHolder> {
+public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHolder> {
 
-    private Context context;
     private List<Booking> bookingList;
 
-    public BookingAdapter(Context context, List<Booking> bookingList) {
-        this.context = context;
+    public BookingAdapter(List<Booking> bookingList) {
         this.bookingList = bookingList;
+    }
+
+    public static class ViewHolder extends RecyclerView.ViewHolder {
+        ImageView carImage;
+        TextView carName, bookingDates, location, status;
+
+        public ViewHolder(@NonNull View itemView) {
+            super(itemView);
+            carImage = itemView.findViewById(R.id.booking_image);
+            carName = itemView.findViewById(R.id.booking_car_name);
+            bookingDates = itemView.findViewById(R.id.booking_dates);
+            location = itemView.findViewById(R.id.booking_location);
+            status = itemView.findViewById(R.id.booking_status);
+        }
     }
 
     @NonNull
     @Override
-    public BookingViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_booking, parent, false);
-        return new BookingViewHolder(view);
+    public BookingAdapter.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.booking_item, parent, false);
+        return new ViewHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull BookingViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull BookingAdapter.ViewHolder holder, int position) {
         Booking booking = bookingList.get(position);
-        holder.carName.setText(booking.getCarName());
-        holder.dates.setText(booking.getStartDate() + " to " + booking.getEndDate());
-        holder.location.setText("Pickup: " + booking.getPickupLocation());
+
+        holder.carName.setText(booking.getCar_name());
+        holder.bookingDates.setText("From: " + booking.getStart_date() + " To: " + booking.getEnd_date());
+        holder.location.setText("Pickup: " + booking.getPickup_location());
         holder.status.setText("Status: " + booking.getStatus());
 
-        Glide.with(context).load(booking.getCarImageUrl()).into(holder.carImage);
+        Glide.with(holder.carImage.getContext()).load(booking.getCar_image()).into(holder.carImage);
     }
 
     @Override
     public int getItemCount() {
         return bookingList.size();
-    }
-
-    static class BookingViewHolder extends RecyclerView.ViewHolder {
-        ImageView carImage;
-        TextView carName, dates, location, status;
-
-        public BookingViewHolder(@NonNull View itemView) {
-            super(itemView);
-            carImage = itemView.findViewById(R.id.bookingCarImage);
-            carName = itemView.findViewById(R.id.bookingCarName);
-            dates = itemView.findViewById(R.id.bookingDates);
-            location = itemView.findViewById(R.id.bookingLocation);
-            status = itemView.findViewById(R.id.bookingStatus);
-        }
     }
 }

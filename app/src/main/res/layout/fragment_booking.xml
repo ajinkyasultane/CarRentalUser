@@ -1,36 +1,10 @@
-<?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".fragments.BookingFragment">
-
-    <TextView
-        android:id="@+id/bookingTitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="My Bookings"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        android:padding="16dp"
-        android:textColor="#000000" />
+    android:layout_height="match_parent">
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/bookingRecyclerView"
+        android:id="@+id/booking_recycler"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp"
-        android:clipToPadding="false"
-        android:scrollbars="vertical"/>
-
-    <ProgressBar
-        android:id="@+id/bookingProgressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone"
-        />
-
-</LinearLayout>
+        android:padding="8dp"/>
+</FrameLayout>
