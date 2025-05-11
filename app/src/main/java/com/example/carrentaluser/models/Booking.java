@@ -1,113 +1,23 @@
 package com.example.carrentaluser.models;
 
 public class Booking {
-    private String bookingId;
-    private String carId;
-    private String carName;
-    private String carImageUrl;
-    private String startDate;
-    private String endDate;
-    private String pickupLocation;
-    private String status;
-    private double totalAmount;
-    private String userId;
+    private String car_name, car_image, start_date, end_date, pickup_location, status;
 
-    public Booking() {
-        // Needed for Firebase
-    }
+    public Booking() {} // Needed for Firestore
 
-    public Booking(String bookingId, String carId, String carName, String carImageUrl,
-                   String startDate, String endDate, String pickupLocation,
-                   String status, double totalAmount, String userId) {
-        this.bookingId = bookingId;
-        this.carId = carId;
-        this.carName = carName;
-        this.carImageUrl = carImageUrl;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.pickupLocation = pickupLocation;
-        this.status = status;
-        this.totalAmount = totalAmount;
-        this.userId = userId;
-    }
-
-    public String getBookingId() {
-        return bookingId;
-    }
-
-    public String getCarId() {
-        return carId;
-    }
-
-    public String getCarName() {
-        return carName;
-    }
-
-    public String getCarImageUrl() {
-        return carImageUrl;
-    }
-
-    public String getStartDate() {
-        return startDate;
-    }
-
-    public String getEndDate() {
-        return endDate;
-    }
-
-    public String getPickupLocation() {
-        return pickupLocation;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public double getTotalAmount() {
-        return totalAmount;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setBookingId(String bookingId) {
-        this.bookingId = bookingId;
-    }
-
-    public void setCarId(String carId) {
-        this.carId = carId;
-    }
-
-    public void setCarName(String carName) {
-        this.carName = carName;
-    }
-
-    public void setCarImageUrl(String carImageUrl) {
-        this.carImageUrl = carImageUrl;
-    }
-
-    public void setStartDate(String startDate) {
-        this.startDate = startDate;
-    }
-
-    public void setEndDate(String endDate) {
-        this.endDate = endDate;
-    }
-
-    public void setPickupLocation(String pickupLocation) {
-        this.pickupLocation = pickupLocation;
-    }
-
-    public void setStatus(String status) {
+    public Booking(String car_name, String car_image, String start_date, String end_date, String pickup_location, String status) {
+        this.car_name = car_name;
+        this.car_image = car_image;
+        this.start_date = start_date;
+        this.end_date = end_date;
+        this.pickup_location = pickup_location;
         this.status = status;
     }
 
-    public void setTotalAmount(double totalAmount) {
-        this.totalAmount = totalAmount;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
+    public String getCar_name() { return car_name; }
+    public String getCar_image() { return car_image; }
+    public String getStart_date() { return start_date; }
+    public String getEnd_date() { return end_date; }
+    public String getPickup_location() { return pickup_location; }
+    public String getStatus() { return status; }
 }

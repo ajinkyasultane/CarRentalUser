@@ -1,6 +1,7 @@
 package com.example.carrentaluser.adapters;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -12,8 +13,9 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.example.carrentaluser.BookingActivity;
 import com.example.carrentaluser.R;
-import com.example.carrentaluser.models.Car;
+import com.example.carrentaluser.model.Car;
 
 import java.util.List;
 
@@ -21,16 +23,10 @@ public class CarAdapter extends RecyclerView.Adapter<CarAdapter.CarViewHolder> {
 
     private Context context;
     private List<Car> carList;
-    private OnBookClickListener listener;
 
-    public interface OnBookClickListener {
-        void onBookClick(Car car);
-    }
-
-    public CarAdapter(Context context, List<Car> carList, OnBookClickListener listener) {
+    public CarAdapter(Context context, List<Car> carList) {
         this.context = context;
         this.carList = carList;
-        this.listener = listener;
     }
 
     @NonNull
@@ -43,19 +39,26 @@ public class CarAdapter extends RecyclerView.Adapter<CarAdapter.CarViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull CarViewHolder holder, int position) {
         Car car = carList.get(position);
-        holder.carNameTextView.setText(car.getCarName());
-        holder.carPriceTextView.setText("₹" + car.getPricePerDay() + " / day");
-      //  holder.carQuantityTextView.setText("Available: " + car.getAvailableQuantity());
 
-     //   Glide.with(context).load(car.getCarImageUrl()).into(holder.carImageView);
+        holder.name.setText(car.getName());
+        holder.brand.setText(car.getBrand());
+        holder.price.setText("₹" + car.getPrice());
+        holder.available.setText("Available: " + car.getAvailablequant());
 
         Glide.with(context)
-                .load(car.getCarImageUrl())
-                .placeholder(R.drawable.placeholder_car)
-                .error(R.drawable.placeholder_car)
-                .into(holder.carImageView);
+                .load(car.getImageUrl())
+                .into(holder.image);
 
-        holder.bookButton.setOnClickListener(v -> listener.onBookClick(car));
+        holder.bookButton.setOnClickListener(v -> {
+            Intent intent = new Intent(context, BookingActivity.class);
+            intent.putExtra("car_name", car.getName());
+            intent.putExtra("car_brand", car.getBrand());
+            intent.putExtra("car_price", car.getPrice());
+            intent.putExtra("car_image", car.getImageUrl());
+            intent.putExtra("car_available", car.getAvailablequant());
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+        });
     }
 
     @Override
@@ -63,18 +66,19 @@ public class CarAdapter extends RecyclerView.Adapter<CarAdapter.CarViewHolder> {
         return carList.size();
     }
 
-    static class CarViewHolder extends RecyclerView.ViewHolder {
-        ImageView carImageView;
-        TextView carNameTextView, carPriceTextView, carQuantityTextView;
+    public static class CarViewHolder extends RecyclerView.ViewHolder {
+        TextView name, brand, price, available;
+        ImageView image;
         Button bookButton;
 
         public CarViewHolder(@NonNull View itemView) {
             super(itemView);
-            carImageView = itemView.findViewById(R.id.carImageView);
-            carNameTextView = itemView.findViewById(R.id.carNameTextView);
-            carPriceTextView = itemView.findViewById(R.id.carPriceTextView);
-            carQuantityTextView = itemView.findViewById(R.id.carQuantityTextView);
-            bookButton = itemView.findViewById(R.id.bookButton);
+            name = itemView.findViewById(R.id.car_name);
+            brand = itemView.findViewById(R.id.car_brand);
+            price = itemView.findViewById(R.id.car_price);
+            available = itemView.findViewById(R.id.car_available);
+            image = itemView.findViewById(R.id.car_image);
+            bookButton = itemView.findViewById(R.id.btn_book);
         }
     }
 }

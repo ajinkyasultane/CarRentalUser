@@ -1,71 +1,64 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:fillViewport="true">
 
-    <!-- Car Image -->
-    <ImageView
-        android:id="@+id/carImageView"
+    <LinearLayout
+        android:orientation="vertical"
+        android:padding="16dp"
         android:layout_width="match_parent"
-        android:layout_height="200dp"
-        android:scaleType="centerCrop" />
+        android:layout_height="wrap_content">
 
-    <!-- Car Name -->
-    <TextView
-        android:id="@+id/carNameTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Car Name"
-        android:textSize="18sp"
-        android:paddingTop="10dp" />
+        <!-- Car Image -->
+        <ImageView
+            android:id="@+id/booking_car_image"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:scaleType="centerCrop" />
 
-    <!-- Start Date -->
-    <TextView
-        android:id="@+id/startDateTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Start Date"
-        android:textSize="16sp" />
+        <!-- Car Name -->
+        <TextView
+            android:id="@+id/booking_car_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Car Name"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp" />
 
-    <!-- End Date -->
-    <TextView
-        android:id="@+id/endDateTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="End Date"
-        android:textSize="16sp" />
+        <!-- Start Date -->
+        <EditText
+            android:id="@+id/booking_start_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Start Date (e.g. 2025-05-12)"
+            android:inputType="date" />
 
-    <!-- Pickup Location -->
-    <TextView
-        android:id="@+id/pickupLocationTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Pickup Location"
-        android:textSize="16sp" />
+        <!-- End Date -->
+        <EditText
+            android:id="@+id/booking_end_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="End Date (e.g. 2025-05-14)"
+            android:inputType="date" />
 
-    <!-- Status -->
-    <TextView
-        android:id="@+id/statusTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Status"
-        android:textSize="16sp" />
+        <!-- Pickup Location -->
+        <EditText
+            android:id="@+id/booking_location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Pickup Location"
+            android:inputType="text" />
 
-    <!-- Total Amount -->
-    <TextView
-        android:id="@+id/totalAmountTextView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Total Amount"
-        android:textSize="16sp" />
+        <!-- Confirm Booking Button -->
+        <Button
+            android:id="@+id/btn_confirm_booking"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Confirm Booking"
+            android:layout_marginTop="16dp" />
 
-    <!-- Cancel Booking Button -->
-    <Button
-        android:id="@+id/cancelBookingButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Cancel Booking"
-        android:layout_marginTop="20dp"/>
-</LinearLayout>
+    </LinearLayout>
+</ScrollView>

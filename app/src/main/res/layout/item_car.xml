@@ -1,56 +1,54 @@
-<!-- res/layout/item_car.xml -->
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.cardview.widget.CardView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_margin="8dp"
     android:layout_height="wrap_content"
-    android:elevation="4dp"
-    android:background="@color/white">
+    android:layout_margin="8dp"
+    android:elevation="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="12dp">
+        android:padding="8dp">
 
         <ImageView
-            android:id="@+id/carImageView"
-            android:layout_width="140dp"
-            android:layout_height="140dp"
-            android:layout_gravity="center"
-            android:scaleType="centerCrop"
-            android:src="@drawable/placeholder_car" />
+            android:id="@+id/car_image"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:scaleType="centerCrop" />
 
         <TextView
-            android:id="@+id/carNameTextView"
+            android:id="@+id/car_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="8dp"
             android:text="Car Name"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:paddingTop="4dp" />
 
         <TextView
-            android:id="@+id/carPriceTextView"
+            android:id="@+id/car_brand"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Price per day"
-            android:textSize="14sp" />
+            android:text="Brand" />
 
         <TextView
-            android:id="@+id/carQuantityTextView"
+            android:id="@+id/car_price"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Available: 3"
-            android:textSize="14sp" />
+            android:text="Price" />
+
+        <TextView
+            android:id="@+id/car_available"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Available: 0" />
 
         <Button
-            android:id="@+id/bookButton"
-            android:layout_width="match_parent"
+            android:id="@+id/btn_book"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:backgroundTint="@color/primary"
             android:text="Book"
-            android:textColor="@android:color/white" />
-
+            android:layout_marginTop="8dp"/>
     </LinearLayout>
 </androidx.cardview.widget.CardView>
