@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import com.example.carrentaluser.BookingActivity;
 import com.example.carrentaluser.R;
-import com.example.carrentaluser.model.Car;
+import com.example.carrentaluser.models.Car;
 
 import java.util.List;
 
@@ -52,10 +52,8 @@ public class CarAdapter extends RecyclerView.Adapter<CarAdapter.CarViewHolder> {
         holder.bookButton.setOnClickListener(v -> {
             Intent intent = new Intent(context, BookingActivity.class);
             intent.putExtra("car_name", car.getName());
-            intent.putExtra("car_brand", car.getBrand());
             intent.putExtra("car_price", car.getPrice());
             intent.putExtra("car_image", car.getImageUrl());
-            intent.putExtra("car_available", car.getAvailablequant());
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             context.startActivity(intent);
         });

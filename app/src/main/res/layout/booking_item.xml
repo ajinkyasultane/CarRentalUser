@@ -4,77 +4,81 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
+    card_view:cardCornerRadius="12dp"
     card_view:cardElevation="6dp"
-    card_view:cardCornerRadius="16dp"
-    card_view:cardUseCompatPadding="true">
+    android:padding="12dp">
 
     <LinearLayout
-        android:orientation="horizontal"
-        android:padding="12dp"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
+        <!-- Car Image -->
         <ImageView
             android:id="@+id/booking_image"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
             android:scaleType="centerCrop"
-            android:layout_marginEnd="12dp"
-            android:background="@drawable/rounded_background" />
+            android:layout_marginBottom="8dp" />
 
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="0dp"
+        <!-- Car Name -->
+        <TextView
+            android:id="@+id/booking_car_name"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center_vertical">
+            android:text="Car Name"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:textColor="#000000"
+            android:layout_marginBottom="4dp" />
 
-            <TextView
-                android:id="@+id/booking_car_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Car Name"
-                android:textStyle="bold"
-                android:textSize="18sp"
-                android:textColor="#222222"
-                android:maxLines="1"
-                android:ellipsize="end" />
+        <!-- Booking Dates -->
+        <TextView
+            android:id="@+id/booking_dates"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="From: 01/01/2025 To: 03/01/2025"
+            android:textSize="14sp"
+            android:layout_marginBottom="2dp" />
 
-            <TextView
-                android:id="@+id/booking_dates"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="From: date To: date"
-                android:textColor="#444444"
-                android:textSize="14sp"
-                android:layout_marginTop="4dp" />
+        <!-- Pickup Location -->
+        <TextView
+            android:id="@+id/booking_location"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pickup: Mumbai"
+            android:textSize="14sp"
+            android:layout_marginBottom="2dp" />
 
-            <TextView
-                android:id="@+id/booking_location"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Pickup: Location"
-                android:textColor="#555555"
-                android:textSize="14sp"
-                android:layout_marginTop="2dp" />
+        <!-- Total Price -->
+        <TextView
+            android:id="@+id/booking_total_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Total: ₹900"
+            android:textStyle="bold"
+            android:textSize="15sp"
+            android:textColor="#4CAF50"
+            android:layout_marginBottom="4dp" />
 
-            <TextView
-                android:id="@+id/booking_status"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Status: Pending"
-                android:textStyle="italic"
-                android:textColor="@android:color/holo_orange_dark"
-                android:layout_marginTop="6dp"
-                android:textSize="14sp" />
-            <Button
-                android:id="@+id/btn_cancel_booking"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Cancel"
-                android:layout_marginTop="8dp"/>
+        <!-- Booking Status -->
+        <TextView
+            android:id="@+id/booking_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Status: Pending"
+            android:textSize="14sp"
+            android:textColor="#F57C00"
+            android:layout_marginBottom="8dp" />
 
-
-        </LinearLayout>
+        <!-- Cancel Button (Visible only for "Pending") -->
+        <Button
+            android:id="@+id/btn_cancel_booking"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cancel Booking"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#D32F2F"
+            android:visibility="gone" />
     </LinearLayout>
 </androidx.cardview.widget.CardView>

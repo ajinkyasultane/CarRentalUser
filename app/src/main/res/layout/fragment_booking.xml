@@ -1,10 +1,28 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <ProgressBar
+        android:id="@+id/progress_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/no_bookings_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No bookings yet."
+        android:layout_gravity="center"
+        android:visibility="gone"
+        android:textSize="16sp"
+        android:layout_marginTop="16dp" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/booking_recycler"
+        android:id="@+id/recycler_bookings"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:padding="8dp"/>
-</FrameLayout>
+        android:layout_height="match_parent" />
+</LinearLayout>
