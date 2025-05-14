@@ -78,8 +78,14 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
                                 snapshot.getReference().delete()
                                         .addOnSuccessListener(unused -> {
                                             Toast.makeText(holder.itemView.getContext(), "Booking cancelled", Toast.LENGTH_SHORT).show();
-                                            bookingList.remove(holder.getAdapterPosition());
-                                            notifyItemRemoved(holder.getAdapterPosition());
+
+                                            int currentPosition = holder.getAdapterPosition();
+                                            if (currentPosition != RecyclerView.NO_POSITION && currentPosition < bookingList.size()) {
+                                                bookingList.remove(currentPosition);
+                                                notifyItemRemoved(currentPosition);
+                                            } else {
+                                                notifyDataSetChanged(); // fallback in case of position mismatch
+                                            }
                                         })
                                         .addOnFailureListener(e -> {
                                             Toast.makeText(holder.itemView.getContext(), "Cancel failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
