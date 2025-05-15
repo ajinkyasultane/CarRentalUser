@@ -9,6 +9,7 @@ import android.util.Log;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -29,6 +30,7 @@ public class EditProfileActivity extends AppCompatActivity {
 
     private ImageView profileImageView;
     private EditText fullNameEditText, emailEditText, ageEditText, addressEditText;
+    private TextView titleTextView;
     private Button saveBtn;
     private Uri imageUri;
 
@@ -37,11 +39,15 @@ public class EditProfileActivity extends AppCompatActivity {
     private StorageReference storageRef;
 
     private String userId;
+    private boolean isFromBooking = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_profile);
+
+        // Check if coming from booking
+        isFromBooking = getIntent().getBooleanExtra("from_booking", false);
 
         // Initialize views
         profileImageView = findViewById(R.id.profileImageView);
@@ -50,6 +56,13 @@ public class EditProfileActivity extends AppCompatActivity {
         ageEditText = findViewById(R.id.ageEditText);
         addressEditText = findViewById(R.id.addressEditText);
         saveBtn = findViewById(R.id.saveBtn);
+        titleTextView = findViewById(R.id.titleTextView);
+
+        // Update title if coming from booking
+        if (isFromBooking) {
+            titleTextView.setText("Complete Your Profile");
+            saveBtn.setText("Save and Continue to Booking");
+        }
 
         // Initialize Firebase components
         mAuth = FirebaseAuth.getInstance();
@@ -60,17 +73,72 @@ public class EditProfileActivity extends AppCompatActivity {
         if (user != null) {
             userId = user.getUid();
             emailEditText.setText(user.getEmail()); // Pre-fill user email
+            
+            // Load existing profile data if available
+            loadExistingProfileData();
         }
 
         profileImageView.setOnClickListener(v -> openImagePicker());
 
         saveBtn.setOnClickListener(v -> {
-            if (imageUri != null) {
-                uploadImageAndSaveData();
-            } else {
-                saveUserData(null); // no image selected
+            if (validateInputs()) {
+                if (imageUri != null) {
+                    uploadImageAndSaveData();
+                } else {
+                    saveUserData(null); // no image selected
+                }
             }
         });
+    }
+    
+    private void loadExistingProfileData() {
+        db.collection("users").document(userId).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    String fullName = documentSnapshot.getString("full_name");
+                    String age = documentSnapshot.getString("age");
+                    String address = documentSnapshot.getString("address");
+                    String profileImageUrl = documentSnapshot.getString("profile_image_url");
+                    
+                    if (fullName != null) fullNameEditText.setText(fullName);
+                    if (age != null) ageEditText.setText(age);
+                    if (address != null) addressEditText.setText(address);
+                    
+                    if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                        Glide.with(this)
+                            .load(profileImageUrl)
+                            .placeholder(R.drawable.ic_profile_placeholder)
+                            .error(R.drawable.ic_profile_placeholder)
+                            .into(profileImageView);
+                    }
+                }
+            })
+            .addOnFailureListener(e -> 
+                Toast.makeText(this, "Failed to load profile data", Toast.LENGTH_SHORT).show()
+            );
+    }
+    
+    private boolean validateInputs() {
+        String fullName = fullNameEditText.getText().toString().trim();
+        String age = ageEditText.getText().toString().trim();
+        String address = addressEditText.getText().toString().trim();
+        
+        if (fullName.isEmpty()) {
+            fullNameEditText.setError("Full name is required");
+            return false;
+        }
+        
+        if (age.isEmpty()) {
+            ageEditText.setError("Age is required");
+            return false;
+        }
+        
+        if (address.isEmpty()) {
+            addressEditText.setError("Address is required");
+            return false;
+        }
+        
+        return true;
     }
 
     private void openImagePicker() {
@@ -120,11 +188,6 @@ public class EditProfileActivity extends AppCompatActivity {
         String address = addressEditText.getText().toString().trim();
         String email = emailEditText.getText().toString().trim();
 
-        if (fullName.isEmpty() || age.isEmpty() || address.isEmpty()) {
-            Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
         HashMap<String, Object> userMap = new HashMap<>();
         userMap.put("full_name", fullName);
         userMap.put("email", email);
@@ -135,18 +198,22 @@ public class EditProfileActivity extends AppCompatActivity {
         db.collection("users").document(userId).set(userMap)
                 .addOnSuccessListener(aVoid -> {
                     Toast.makeText(this, "Profile updated", Toast.LENGTH_SHORT).show();
-
-                    // Go back to the activity that hosts ProfileFragment
-                    Intent intent = new Intent(EditProfileActivity.this, MainActivity.class);
-                    intent.putExtra("navigateTo", "profile");
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    startActivity(intent);
-                    finish(); // close EditProfileActivity
+                    
+                    if (isFromBooking) {
+                        // Return to BookingActivity
+                        finish();
+                    } else {
+                        // Go back to the activity that hosts ProfileFragment
+                        Intent intent = new Intent(EditProfileActivity.this, MainActivity.class);
+                        intent.putExtra("navigateTo", "profile");
+                        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                        startActivity(intent);
+                        finish(); // close EditProfileActivity
+                    }
                 })
                 .addOnFailureListener(e -> {
                     Toast.makeText(this, "Update failed", Toast.LENGTH_SHORT).show();
                     Log.e("FirestoreError", "Error updating: ", e);
                 });
-
     }
 }

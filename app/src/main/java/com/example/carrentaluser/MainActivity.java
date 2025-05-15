@@ -10,6 +10,7 @@ import com.example.carrentaluser.fragments.HomeFragment;
 import com.example.carrentaluser.fragments.BookingFragment;
 import com.example.carrentaluser.fragments.TrackingFragment;
 import com.example.carrentaluser.fragments.ProfileFragment;
+import com.example.carrentaluser.utils.TokenManager;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
@@ -20,6 +21,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+       // TokenManager.uploadToken(); // safe to call here
+
 
         bottomNavigationView = findViewById(R.id.bottom_navigation);
 

@@ -1,15 +1,37 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#F5F7FA"
     android:padding="16dp">
 
     <!-- Search View -->
-    <androidx.appcompat.widget.SearchView
-        android:id="@+id/search_view"
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:queryHint="Search cars..." />
+        android:layout_height="wrap_content"
+        android:elevation="8dp"
+        app:cardCornerRadius="12dp">
+        
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/search_view"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:background="@android:color/white"
+            android:queryHint="Search cars..."
+            app:iconifiedByDefault="false"
+            app:queryBackground="@android:color/transparent" />
+    </androidx.cardview.widget.CardView>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Available Cars"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#212121"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="8dp" />
 
     <!-- Progress Bar -->
     <ProgressBar
@@ -25,5 +47,7 @@
         android:id="@+id/recycler_cars"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="8dp" />
+        android:layout_marginTop="2dp"
+        android:clipToPadding="false"
+        android:paddingBottom="4dp" />
 </LinearLayout>

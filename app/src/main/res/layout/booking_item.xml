@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    card_view:cardCornerRadius="12dp"
-    card_view:cardElevation="6dp"
-    android:padding="12dp">
+    android:layout_marginBottom="16dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:strokeWidth="1dp"
+    app:strokeColor="#E0E0E0">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,66 +21,122 @@
             android:layout_width="match_parent"
             android:layout_height="180dp"
             android:scaleType="centerCrop"
-            android:layout_marginBottom="8dp" />
+            android:contentDescription="Car Image" />
 
-        <!-- Car Name -->
-        <TextView
-            android:id="@+id/booking_car_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Car Name"
-            android:textStyle="bold"
-            android:textSize="18sp"
-            android:textColor="#000000"
-            android:layout_marginBottom="4dp" />
-
-        <!-- Booking Dates -->
-        <TextView
-            android:id="@+id/booking_dates"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="From: 01/01/2025 To: 03/01/2025"
-            android:textSize="14sp"
-            android:layout_marginBottom="2dp" />
-
-        <!-- Pickup Location -->
-        <TextView
-            android:id="@+id/booking_location"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Pickup: Mumbai"
-            android:textSize="14sp"
-            android:layout_marginBottom="2dp" />
-
-        <!-- Total Price -->
-        <TextView
-            android:id="@+id/booking_total_price"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Total: ₹900"
-            android:textStyle="bold"
-            android:textSize="15sp"
-            android:textColor="#4CAF50"
-            android:layout_marginBottom="4dp" />
-
-        <!-- Booking Status -->
-        <TextView
-            android:id="@+id/booking_status"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Status: Pending"
-            android:textSize="14sp"
-            android:textColor="#F57C00"
-            android:layout_marginBottom="8dp" />
-
-        <!-- Cancel Button (Visible only for "Pending") -->
-        <Button
-            android:id="@+id/btn_cancel_booking"
+        <!-- Booking Details -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Cancel Booking"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#D32F2F"
-            android:visibility="gone" />
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Car Name -->
+            <TextView
+                android:id="@+id/booking_car_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Car Name"
+                android:textStyle="bold"
+                android:textSize="20sp"
+                android:textColor="#212121"
+                android:layout_marginBottom="8dp" />
+
+            <!-- Booking Dates with Icon -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@android:drawable/ic_menu_my_calendar"
+                    android:tint="#757575"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/booking_dates"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="From: 01/01/2025 To: 03/01/2025"
+                    android:textSize="14sp"
+                    android:textColor="#424242" />
+            </LinearLayout>
+
+            <!-- Pickup Location with Icon -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@android:drawable/ic_menu_mylocation"
+                    android:tint="#757575"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/booking_location"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Pickup: Mumbai"
+                    android:textSize="14sp"
+                    android:textColor="#424242" />
+            </LinearLayout>
+            
+            <!-- Status with Icon -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@android:drawable/ic_menu_info_details"
+                    android:tint="#757575"
+                    android:layout_marginEnd="8dp" />
+
+                <TextView
+                    android:id="@+id/booking_status"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Status: Pending"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Total Price -->
+            <TextView
+                android:id="@+id/booking_total_price"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Total: ₹900"
+                android:textStyle="bold"
+                android:textSize="18sp"
+                android:textColor="#4CAF50"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Cancel Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_cancel_booking"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Cancel Booking"
+                android:textAllCaps="false"
+                app:cornerRadius="12dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:visibility="gone"
+                android:backgroundTint="#D32F2F" />
+        </LinearLayout>
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</com.google.android.material.card.MaterialCardView>

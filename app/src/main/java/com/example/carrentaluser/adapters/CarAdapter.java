@@ -45,9 +45,9 @@ public class CarAdapter extends RecyclerView.Adapter<CarAdapter.CarViewHolder> i
     public void onBindViewHolder(@NonNull CarViewHolder holder, int position) {
         Car car = carList.get(position);
 
-        holder.name.setText(car.getName());
-        holder.brand.setText(car.getBrand());
-        holder.price.setText("₹" + car.getPrice());
+        holder.name.setText("Car Name :- "+car.getName());
+        holder.brand.setText("Brand Name :- "+car.getBrand());
+        holder.price.setText("Price  ₹" + car.getPrice());
         holder.available.setText("Available: " + car.getAvailablequant());
 
         Glide.with(context)
