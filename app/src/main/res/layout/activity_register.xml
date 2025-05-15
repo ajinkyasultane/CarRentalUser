@@ -57,22 +57,31 @@
                     android:padding="24dp">
 
                     <ImageView
-                        android:layout_width="80dp"
-                        android:layout_height="80dp"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
                         android:layout_gravity="center"
                         android:layout_marginBottom="16dp"
-                        android:src="@drawable/ic_car"
+                        android:src="@drawable/ic_car_new"
                         android:tint="#8E2DE2" />
 
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="24dp"
+                        android:layout_marginBottom="8dp"
                         android:gravity="center"
                         android:text="Create Account"
                         android:textColor="#333333"
-                        android:textSize="24sp"
+                        android:textSize="28sp"
                         android:textStyle="bold" />
+                        
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="24dp"
+                        android:gravity="center"
+                        android:text="Join us and start your journey"
+                        android:textColor="#757575"
+                        android:textSize="16sp" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
@@ -88,7 +97,7 @@
                             android:layout_height="wrap_content"
                             android:background="@drawable/input_background_modern"
                             android:drawableStart="@android:drawable/ic_dialog_email"
-                            android:drawablePadding="8dp"
+                            android:drawablePadding="12dp"
                             android:drawableTint="#8E2DE2"
                             android:hint="Email"
                             android:inputType="textEmailAddress"
@@ -111,7 +120,7 @@
                             android:layout_height="wrap_content"
                             android:background="@drawable/input_background_modern"
                             android:drawableStart="@android:drawable/ic_lock_lock"
-                            android:drawablePadding="8dp"
+                            android:drawablePadding="12dp"
                             android:drawableTint="#8E2DE2"
                             android:hint="Password"
                             android:inputType="textPassword"
@@ -123,6 +132,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="56dp"
                         android:background="@drawable/button_gradient"
+                        android:elevation="4dp"
                         android:text="Sign Up"
                         android:textAllCaps="false"
                         android:textColor="#FFFFFF"
