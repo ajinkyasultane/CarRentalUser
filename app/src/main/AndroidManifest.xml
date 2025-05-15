@@ -55,6 +55,10 @@
         </activity>
 
         <activity
+            android:name=".MapSelectionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
+        <activity
             android:name=".BookingActivity"
             android:exported="false" />
         <activity

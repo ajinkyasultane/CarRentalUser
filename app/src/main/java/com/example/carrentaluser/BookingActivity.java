@@ -4,16 +4,20 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -23,13 +27,18 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+
+import android.location.Address;
+import android.location.Geocoder;
 
 public class BookingActivity extends AppCompatActivity {
 
     private ImageView imageCar;
     private TextView tvCarName, tvCarPrice, tvTotalPrice;
     private TextInputEditText etStartDate, etEndDate, etPickupLocation;
+    private TextInputLayout pickupLayout;
     private Button btnSubmit;
 
     private String carName, carImageUrl;
@@ -41,6 +50,13 @@ public class BookingActivity extends AppCompatActivity {
     private Calendar minDate;
     private Date selectedStartDate;
     private boolean isProfileComplete = false;
+    
+    // Store location details
+    private double selectedLatitude = 0;
+    private double selectedLongitude = 0;
+    
+    // Activity result launcher for map selection
+    private ActivityResultLauncher<Intent> mapSelectionLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +78,9 @@ public class BookingActivity extends AppCompatActivity {
 
         // Set up date pickers
         setupDatePickers();
+        
+        // Set up location picker
+        setupLocationPicker();
 
         // Set up submit button
         btnSubmit.setOnClickListener(v -> {
@@ -71,6 +90,23 @@ public class BookingActivity extends AppCompatActivity {
                 showProfileIncompleteDialog();
             }
         });
+        
+        // Initialize map selection result launcher
+        mapSelectionLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Intent data = result.getData();
+                    selectedLatitude = data.getDoubleExtra("latitude", 0);
+                    selectedLongitude = data.getDoubleExtra("longitude", 0);
+                    String locationName = data.getStringExtra("location_name");
+                    
+                    if (locationName != null && !locationName.isEmpty()) {
+                        etPickupLocation.setText(locationName);
+                    }
+                }
+            }
+        );
     }
 
     private void initializeViews() {
@@ -81,6 +117,7 @@ public class BookingActivity extends AppCompatActivity {
         etStartDate = findViewById(R.id.et_start_date);
         etEndDate = findViewById(R.id.et_end_date);
         etPickupLocation = findViewById(R.id.et_pickup_location);
+        pickupLayout = findViewById(R.id.pickup_location_layout);
         btnSubmit = findViewById(R.id.btn_submit_booking);
 
         // Set minimum date to today
@@ -242,6 +279,31 @@ public class BookingActivity extends AppCompatActivity {
         }
     }
 
+    private void setupLocationPicker() {
+        // Make the pickup location field non-editable but clickable
+        etPickupLocation.setFocusable(false);
+        etPickupLocation.setClickable(true);
+        
+        // Set click listener for the pickup location field
+        etPickupLocation.setOnClickListener(v -> openMapSelection());
+        
+        // Add a trailing icon to the TextInputLayout for the pickup location
+        pickupLayout.setEndIconMode(TextInputLayout.END_ICON_CUSTOM);
+        pickupLayout.setEndIconDrawable(R.drawable.ic_map);
+        pickupLayout.setEndIconContentDescription("Select location on map");
+        pickupLayout.setEndIconOnClickListener(v -> openMapSelection());
+    }
+    
+    private void openMapSelection() {
+        Intent intent = new Intent(BookingActivity.this, MapSelectionActivity.class);
+        // Pass current location if already selected
+        if (selectedLatitude != 0 && selectedLongitude != 0) {
+            intent.putExtra("current_latitude", selectedLatitude);
+            intent.putExtra("current_longitude", selectedLongitude);
+        }
+        mapSelectionLauncher.launch(intent);
+    }
+
     private void submitBooking() {
         String startDate = etStartDate.getText().toString();
         String endDate = etEndDate.getText().toString();
@@ -276,32 +338,97 @@ public class BookingActivity extends AppCompatActivity {
             booking.put("end_date", endDate);
             booking.put("pickup_location", pickup);
             booking.put("total_price", totalPrice);
-            booking.put("status", "Pending");
+            
+            // For testing purposes, set status to Confirmed directly
+            booking.put("status", "Confirmed");
+            
             booking.put("user_id", userId);
             booking.put("user_email", userEmail);
             booking.put("booking_date", sdf.format(new Date()));
+            
+            // Add location coordinates if selected from map
+            if (selectedLatitude != 0 && selectedLongitude != 0) {
+                booking.put("latitude", selectedLatitude);
+                booking.put("longitude", selectedLongitude);
+                Log.d("BookingActivity", "Adding coordinates to booking: " + selectedLatitude + ", " + selectedLongitude);
+            } else {
+                Log.d("BookingActivity", "No coordinates selected, using geocoding for: " + pickup);
+                // For testing, we'll start a geocoding operation to get coordinates
+                startGeocodingAddress(pickup, booking);
+                return; // Early return as we'll continue in the callback
+            }
 
             // Show loading state
             btnSubmit.setEnabled(false);
             btnSubmit.setText("Processing...");
 
-            db.collection("bookings")
-                    .add(booking)
-                    .addOnSuccessListener(documentReference -> {
-                        Toast.makeText(this, "Booking submitted successfully!", Toast.LENGTH_SHORT).show();
-                        finish();
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(this, "Failed to book: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        btnSubmit.setEnabled(true);
-                        btnSubmit.setText("Submit Booking");
-                    });
+            // Submit the booking to Firebase
+            submitBookingToFirebase(booking);
 
         } catch (Exception e) {
+            Log.e("BookingActivity", "Error in submitBooking: " + e.getMessage(), e);
             Toast.makeText(this, "Invalid dates", Toast.LENGTH_SHORT).show();
             btnSubmit.setEnabled(true);
             btnSubmit.setText("Submit Booking");
         }
+    }
+    
+    private void startGeocodingAddress(String address, HashMap<String, Object> booking) {
+        btnSubmit.setEnabled(false);
+        btnSubmit.setText("Processing location...");
+        
+        new Thread(() -> {
+            try {
+                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+                List<Address> addresses = geocoder.getFromLocationName(address, 1);
+                
+                runOnUiThread(() -> {
+                    if (addresses != null && !addresses.isEmpty()) {
+                        Address location = addresses.get(0);
+                        double latitude = location.getLatitude();
+                        double longitude = location.getLongitude();
+                        
+                        Log.d("BookingActivity", "Geocoded address to: " + latitude + ", " + longitude);
+                        
+                        // Add the coordinates to the booking
+                        booking.put("latitude", latitude);
+                        booking.put("longitude", longitude);
+                        
+                        // Submit the booking to Firebase
+                        submitBookingToFirebase(booking);
+                    } else {
+                        Log.e("BookingActivity", "Could not geocode address: " + address);
+                        Toast.makeText(this, "Could not find location. Please try again or select on map.", Toast.LENGTH_LONG).show();
+                        btnSubmit.setEnabled(true);
+                        btnSubmit.setText("Submit Booking");
+                    }
+                });
+            } catch (Exception e) {
+                Log.e("BookingActivity", "Error geocoding address: " + e.getMessage(), e);
+                runOnUiThread(() -> {
+                    Toast.makeText(this, "Error finding location. Please try again.", Toast.LENGTH_SHORT).show();
+                    btnSubmit.setEnabled(true);
+                    btnSubmit.setText("Submit Booking");
+                });
+            }
+        }).start();
+    }
+    
+    private void submitBookingToFirebase(HashMap<String, Object> booking) {
+        btnSubmit.setText("Submitting booking...");
+        
+        db.collection("bookings")
+                .add(booking)
+                .addOnSuccessListener(documentReference -> {
+                    Toast.makeText(this, "Booking submitted successfully!", Toast.LENGTH_SHORT).show();
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("BookingActivity", "Error adding booking: " + e.getMessage());
+                    Toast.makeText(this, "Failed to book: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    btnSubmit.setEnabled(true);
+                    btnSubmit.setText("Submit Booking");
+                });
     }
     
     @Override

@@ -106,11 +106,15 @@
 
                 <!-- Pickup Location -->
                 <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/pickup_location_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Pickup Location"
                     android:layout_marginTop="12dp"
                     app:startIconDrawable="@android:drawable/ic_menu_mylocation"
+                    app:endIconMode="custom"
+                    app:endIconDrawable="@drawable/ic_map"
+                    app:endIconContentDescription="Select location on map"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
