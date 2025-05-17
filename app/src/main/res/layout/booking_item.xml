@@ -4,8 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="16dp"
-    app:cardCornerRadius="16dp"
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="8dp"
     app:cardElevation="4dp"
     app:strokeWidth="1dp"
     app:strokeColor="#E0E0E0">
@@ -30,13 +30,13 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Car Name -->
-            <TextView
-                android:id="@+id/booking_car_name"
+        <!-- Car Name -->
+        <TextView
+            android:id="@+id/booking_car_name"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Car Name"
-                android:textStyle="bold"
+            android:layout_height="wrap_content"
+            android:text="Car Name"
+            android:textStyle="bold"
                 android:textSize="20sp"
                 android:textColor="#212121"
                 android:layout_marginBottom="8dp" />
@@ -53,15 +53,15 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:src="@android:drawable/ic_menu_my_calendar"
-                    android:tint="#757575"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_marginEnd="8dp"
+                    app:tint="#757575" />
 
-                <TextView
-                    android:id="@+id/booking_dates"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="From: 01/01/2025 To: 03/01/2025"
-                    android:textSize="14sp"
+        <TextView
+            android:id="@+id/booking_dates"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="From: 01/01/2025 To: 03/01/2025"
+            android:textSize="14sp"
                     android:textColor="#424242" />
             </LinearLayout>
 
@@ -77,22 +77,22 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:src="@android:drawable/ic_menu_mylocation"
-                    android:tint="#757575"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_marginEnd="8dp"
+                    app:tint="#757575" />
 
-                <TextView
-                    android:id="@+id/booking_location"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Pickup: Mumbai"
-                    android:textSize="14sp"
+        <TextView
+            android:id="@+id/booking_location"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pickup: Mumbai"
+            android:textSize="14sp"
                     android:textColor="#424242" />
             </LinearLayout>
-            
+
             <!-- Status with Icon -->
             <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+            android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:layout_marginBottom="12dp"
                 android:gravity="center_vertical">
@@ -101,15 +101,15 @@
                     android:layout_width="20dp"
                     android:layout_height="20dp"
                     android:src="@android:drawable/ic_menu_info_details"
-                    android:tint="#757575"
-                    android:layout_marginEnd="8dp" />
+                    android:layout_marginEnd="8dp"
+                    app:tint="#757575" />
 
-                <TextView
-                    android:id="@+id/booking_status"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Status: Pending"
-                    android:textSize="14sp"
+        <TextView
+            android:id="@+id/booking_status"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Status: Pending"
+            android:textSize="14sp"
                     android:textStyle="bold" />
             </LinearLayout>
 
@@ -123,14 +123,14 @@
                 android:textSize="18sp"
                 android:textColor="#4CAF50"
                 android:layout_marginTop="4dp"
-                android:layout_marginBottom="16dp" />
+                android:layout_marginBottom="4dp" />
 
             <!-- Cancel Button -->
             <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_cancel_booking"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Cancel Booking"
+            android:id="@+id/btn_cancel_booking"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Cancel Booking"
                 android:textAllCaps="false"
                 app:cornerRadius="12dp"
                 android:paddingTop="12dp"

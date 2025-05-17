@@ -4,7 +4,6 @@ import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -27,11 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
-
-import android.location.Address;
-import android.location.Geocoder;
 
 public class BookingActivity extends AppCompatActivity {
 
@@ -133,8 +128,8 @@ public class BookingActivity extends AppCompatActivity {
         carImageUrl = getIntent().getStringExtra("car_image");
         carPrice = getIntent().getIntExtra("car_price", 0);
 
-        tvCarName.setText(carName);
-        tvCarPrice.setText("₹" + carPrice);
+        tvCarName.setText("Car Name :"+carName);
+        tvCarPrice.setText("₹" + carPrice+" Per Day");
         Glide.with(this)
             .load(carImageUrl)
             .centerCrop()
@@ -218,8 +213,8 @@ public class BookingActivity extends AppCompatActivity {
 
         Calendar finalCalendar = calendar;
         DatePickerDialog datePickerDialog = new DatePickerDialog(
-            this,
-            (view, year, month, dayOfMonth) -> {
+                this,
+                (view, year, month, dayOfMonth) -> {
                 finalCalendar.set(year, month, dayOfMonth);
                 Date selectedDate = finalCalendar.getTime();
                 
@@ -235,11 +230,11 @@ public class BookingActivity extends AppCompatActivity {
                 }
                 
                 target.setText(sdf.format(selectedDate));
-                calculateTotalPrice();
-            },
-            calendar.get(Calendar.YEAR),
-            calendar.get(Calendar.MONTH),
-            calendar.get(Calendar.DAY_OF_MONTH)
+                    calculateTotalPrice();
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
         );
 
         // Set minimum date
@@ -338,10 +333,7 @@ public class BookingActivity extends AppCompatActivity {
             booking.put("end_date", endDate);
             booking.put("pickup_location", pickup);
             booking.put("total_price", totalPrice);
-            
-            // For testing purposes, set status to Confirmed directly
-            booking.put("status", "Confirmed");
-            
+            booking.put("status", "Pending");
             booking.put("user_id", userId);
             booking.put("user_email", userEmail);
             booking.put("booking_date", sdf.format(new Date()));
@@ -350,85 +342,29 @@ public class BookingActivity extends AppCompatActivity {
             if (selectedLatitude != 0 && selectedLongitude != 0) {
                 booking.put("latitude", selectedLatitude);
                 booking.put("longitude", selectedLongitude);
-                Log.d("BookingActivity", "Adding coordinates to booking: " + selectedLatitude + ", " + selectedLongitude);
-            } else {
-                Log.d("BookingActivity", "No coordinates selected, using geocoding for: " + pickup);
-                // For testing, we'll start a geocoding operation to get coordinates
-                startGeocodingAddress(pickup, booking);
-                return; // Early return as we'll continue in the callback
             }
 
             // Show loading state
             btnSubmit.setEnabled(false);
             btnSubmit.setText("Processing...");
 
-            // Submit the booking to Firebase
-            submitBookingToFirebase(booking);
+            db.collection("bookings")
+                    .add(booking)
+                    .addOnSuccessListener(documentReference -> {
+                        Toast.makeText(this, "Booking submitted successfully!", Toast.LENGTH_SHORT).show();
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Failed to book: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        btnSubmit.setEnabled(true);
+                        btnSubmit.setText("Submit Booking");
+                    });
 
         } catch (Exception e) {
-            Log.e("BookingActivity", "Error in submitBooking: " + e.getMessage(), e);
             Toast.makeText(this, "Invalid dates", Toast.LENGTH_SHORT).show();
             btnSubmit.setEnabled(true);
             btnSubmit.setText("Submit Booking");
         }
-    }
-    
-    private void startGeocodingAddress(String address, HashMap<String, Object> booking) {
-        btnSubmit.setEnabled(false);
-        btnSubmit.setText("Processing location...");
-        
-        new Thread(() -> {
-            try {
-                Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-                List<Address> addresses = geocoder.getFromLocationName(address, 1);
-                
-                runOnUiThread(() -> {
-                    if (addresses != null && !addresses.isEmpty()) {
-                        Address location = addresses.get(0);
-                        double latitude = location.getLatitude();
-                        double longitude = location.getLongitude();
-                        
-                        Log.d("BookingActivity", "Geocoded address to: " + latitude + ", " + longitude);
-                        
-                        // Add the coordinates to the booking
-                        booking.put("latitude", latitude);
-                        booking.put("longitude", longitude);
-                        
-                        // Submit the booking to Firebase
-                        submitBookingToFirebase(booking);
-                    } else {
-                        Log.e("BookingActivity", "Could not geocode address: " + address);
-                        Toast.makeText(this, "Could not find location. Please try again or select on map.", Toast.LENGTH_LONG).show();
-                        btnSubmit.setEnabled(true);
-                        btnSubmit.setText("Submit Booking");
-                    }
-                });
-            } catch (Exception e) {
-                Log.e("BookingActivity", "Error geocoding address: " + e.getMessage(), e);
-                runOnUiThread(() -> {
-                    Toast.makeText(this, "Error finding location. Please try again.", Toast.LENGTH_SHORT).show();
-                    btnSubmit.setEnabled(true);
-                    btnSubmit.setText("Submit Booking");
-                });
-            }
-        }).start();
-    }
-    
-    private void submitBookingToFirebase(HashMap<String, Object> booking) {
-        btnSubmit.setText("Submitting booking...");
-        
-        db.collection("bookings")
-                .add(booking)
-                .addOnSuccessListener(documentReference -> {
-                    Toast.makeText(this, "Booking submitted successfully!", Toast.LENGTH_SHORT).show();
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("BookingActivity", "Error adding booking: " + e.getMessage());
-                    Toast.makeText(this, "Failed to book: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    btnSubmit.setEnabled(true);
-                    btnSubmit.setText("Submit Booking");
-                });
     }
     
     @Override

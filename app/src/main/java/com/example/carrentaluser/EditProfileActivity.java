@@ -1,11 +1,14 @@
 package com.example.carrentaluser;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -14,6 +17,7 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import com.bumptech.glide.Glide;
 import com.google.firebase.auth.FirebaseAuth;
@@ -30,9 +34,10 @@ public class EditProfileActivity extends AppCompatActivity {
 
     private ImageView profileImageView;
     private EditText fullNameEditText, emailEditText, ageEditText, addressEditText;
-    private TextView titleTextView;
+    private TextView titleTextView, uploadPhotoText;
     private Button saveBtn;
     private Uri imageUri;
+    private boolean isImageSelected = false;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -40,11 +45,18 @@ public class EditProfileActivity extends AppCompatActivity {
 
     private String userId;
     private boolean isFromBooking = false;
+    private String existingImageUrl = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_profile);
+
+        // Set up action bar
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setTitle("Edit Profile");
 
         // Check if coming from booking
         isFromBooking = getIntent().getBooleanExtra("from_booking", false);
@@ -57,6 +69,7 @@ public class EditProfileActivity extends AppCompatActivity {
         addressEditText = findViewById(R.id.addressEditText);
         saveBtn = findViewById(R.id.saveBtn);
         titleTextView = findViewById(R.id.titleTextView);
+        uploadPhotoText = findViewById(R.id.uploadPhotoText);
 
         // Update title if coming from booking
         if (isFromBooking) {
@@ -79,13 +92,18 @@ public class EditProfileActivity extends AppCompatActivity {
         }
 
         profileImageView.setOnClickListener(v -> openImagePicker());
+        uploadPhotoText.setOnClickListener(v -> openImagePicker());
 
         saveBtn.setOnClickListener(v -> {
             if (validateInputs()) {
-                if (imageUri != null) {
+                if (imageUri != null || isImageSelected) {
                     uploadImageAndSaveData();
+                } else if (existingImageUrl != null && !existingImageUrl.isEmpty()) {
+                    // User already has a profile image and didn't change it
+                    saveUserData(existingImageUrl);
                 } else {
-                    saveUserData(null); // no image selected
+                    // No image selected and no existing image
+                    Toast.makeText(this, "Please select a profile image", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -105,11 +123,17 @@ public class EditProfileActivity extends AppCompatActivity {
                     if (address != null) addressEditText.setText(address);
                     
                     if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
+                        existingImageUrl = profileImageUrl;
+                        isImageSelected = true;
+                        
                         Glide.with(this)
                             .load(profileImageUrl)
                             .placeholder(R.drawable.ic_profile_placeholder)
                             .error(R.drawable.ic_profile_placeholder)
                             .into(profileImageView);
+                        
+                        // Update text to show image is already selected
+                        uploadPhotoText.setText("Tap to change profile picture");
                     }
                 }
             })
@@ -123,22 +147,30 @@ public class EditProfileActivity extends AppCompatActivity {
         String age = ageEditText.getText().toString().trim();
         String address = addressEditText.getText().toString().trim();
         
+        boolean isValid = true;
+        
         if (fullName.isEmpty()) {
-            fullNameEditText.setError("Full name is required");
-            return false;
+            fullNameEditText.setError("Required");
+            isValid = false;
         }
         
         if (age.isEmpty()) {
-            ageEditText.setError("Age is required");
-            return false;
+            ageEditText.setError("Required");
+            isValid = false;
         }
         
         if (address.isEmpty()) {
-            addressEditText.setError("Address is required");
-            return false;
+            addressEditText.setError("Required");
+            isValid = false;
         }
         
-        return true;
+        // Check image selection
+        if (!isImageSelected && (existingImageUrl == null || existingImageUrl.isEmpty())) {
+            Toast.makeText(this, "Please select a profile image", Toast.LENGTH_SHORT).show();
+            isValid = false;
+        }
+        
+        return isValid;
     }
 
     private void openImagePicker() {
@@ -153,10 +185,18 @@ public class EditProfileActivity extends AppCompatActivity {
         if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null) {
             imageUri = data.getData();
             profileImageView.setImageURI(imageUri);
+            isImageSelected = true;
+            uploadPhotoText.setText("Profile picture selected - Tap to change");
         }
     }
 
     private void uploadImageAndSaveData() {
+        // If user kept existing image
+        if (imageUri == null && existingImageUrl != null && !existingImageUrl.isEmpty()) {
+            saveUserData(existingImageUrl);
+            return;
+        }
+        
         if (imageUri == null) {
             Toast.makeText(this, "Please select an image", Toast.LENGTH_SHORT).show();
             return;
@@ -215,5 +255,56 @@ public class EditProfileActivity extends AppCompatActivity {
                     Toast.makeText(this, "Update failed", Toast.LENGTH_SHORT).show();
                     Log.e("FirestoreError", "Error updating: ", e);
                 });
+    }
+    
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.edit_profile_menu, menu);
+        return true;
+    }
+    
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+        
+        if (id == android.R.id.home) {
+            onBackPressed();
+            return true;
+        } else if (id == R.id.action_exit) {
+            showExitConfirmationDialog();
+            return true;
+        }
+        
+        return super.onOptionsItemSelected(item);
+    }
+    
+    private void showExitConfirmationDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle("Exit Application")
+            .setMessage("Are you sure you want to exit?")
+            .setPositiveButton("Yes", (dialog, which) -> {
+                finishAffinity(); // Close all activities and exit app
+            })
+            .setNegativeButton("No", null)
+            .show();
+    }
+    
+    @Override
+    public void onBackPressed() {
+        // Check if there are unsaved changes
+        if (!fullNameEditText.getText().toString().isEmpty() || 
+            !ageEditText.getText().toString().isEmpty() || 
+            !addressEditText.getText().toString().isEmpty() ||
+            imageUri != null) {
+            
+            new AlertDialog.Builder(this)
+                .setTitle("Discard Changes")
+                .setMessage("You have unsaved changes. Are you sure you want to discard them?")
+                .setPositiveButton("Discard", (dialog, which) -> super.onBackPressed())
+                .setNegativeButton("Cancel", null)
+                .show();
+        } else {
+            super.onBackPressed();
+        }
     }
 }

@@ -3,59 +3,87 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white"
-    android:padding="16dp">
+    android:background="@drawable/background_gradient"
+    android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:animateLayoutChanges="true">
 
         <!-- Car Image Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            android:layout_marginBottom="20dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="8dp"
+            android:transitionName="carImageTransition">
 
-            <ImageView
-                android:id="@+id/image_car"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="250dp"
-                android:scaleType="centerCrop" />
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:id="@+id/image_car"
+                    android:layout_width="match_parent"
+                    android:layout_height="240dp"
+                    android:scaleType="centerCrop" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:layout_gravity="bottom"
+                    android:background="@drawable/gradient_overlay" />
+            </FrameLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <!-- Car Details Card -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            android:layout_marginBottom="20dp"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="4dp"
+            android:alpha="0.95"
+            app:strokeWidth="0.5dp"
+            app:strokeColor="#D0D5E1">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
+                android:orientation="horizontal"
+                android:padding="20dp"
+                android:background="@drawable/card_bg_gradient">
 
-                <TextView
-                    android:id="@+id/tv_car_name"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:textSize="24sp"
-                    android:textStyle="bold"
-                    android:textColor="@color/black" />
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-                <TextView
-                    android:id="@+id/tv_car_price"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="₹0"
-                    android:textSize="20sp"
-                    android:textColor="@color/design_default_color_primary"
-                    android:layout_marginTop="8dp" />
+                    <TextView
+                        android:id="@+id/tv_car_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="24sp"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:fontFamily="sans-serif-medium" />
+
+                    <TextView
+                        android:id="@+id/tv_car_price"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="₹0"
+                        android:textColor="#3F51B5"
+                        android:textSize="24sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -63,15 +91,28 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
-            app:cardElevation="4dp">
+            android:layout_marginBottom="20dp"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="4dp"
+            android:alpha="0.98"
+            android:stateListAnimator="@animator/card_elevation_animator">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:padding="16dp">
+                android:padding="24dp"
+                android:background="@drawable/card_bg_white">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Booking Details"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    android:textColor="#212121"
+                    android:fontFamily="sans-serif-medium"
+                    android:layout_marginBottom="20dp" />
 
                 <!-- Start Date -->
                 <com.google.android.material.textfield.TextInputLayout
@@ -79,13 +120,19 @@
                     android:layout_height="wrap_content"
                     android:hint="Start Date"
                     app:startIconDrawable="@android:drawable/ic_menu_my_calendar"
+                    app:startIconTint="#3F51B5"
+                    app:boxStrokeColor="#3F51B5"
+                    app:hintTextColor="#3F51B5"
+                    app:boxStrokeWidth="1.5dp"
+                    app:shapeAppearance="@style/ShapeAppearance.MaterialComponents.MediumComponent"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/et_start_date"
                         android:focusable="false"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- End Date -->
@@ -93,15 +140,21 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="End Date"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="16dp"
                     app:startIconDrawable="@android:drawable/ic_menu_my_calendar"
+                    app:startIconTint="#3F51B5"
+                    app:boxStrokeColor="#3F51B5"
+                    app:hintTextColor="#3F51B5"
+                    app:boxStrokeWidth="1.5dp"
+                    app:shapeAppearance="@style/ShapeAppearance.MaterialComponents.MediumComponent"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/et_end_date"
                         android:focusable="false"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Pickup Location -->
@@ -110,17 +163,24 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:hint="Pickup Location"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="16dp"
                     app:startIconDrawable="@android:drawable/ic_menu_mylocation"
+                    app:startIconTint="#3F51B5"
                     app:endIconMode="custom"
                     app:endIconDrawable="@drawable/ic_map"
+                    app:endIconTint="#3F51B5"
+                    app:boxStrokeColor="#3F51B5"
+                    app:hintTextColor="#3F51B5"
+                    app:boxStrokeWidth="1.5dp"
                     app:endIconContentDescription="Select location on map"
+                    app:shapeAppearance="@style/ShapeAppearance.MaterialComponents.MediumComponent"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/et_pickup_location"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
@@ -129,10 +189,12 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardCornerRadius="12dp"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="24dp"
             app:cardElevation="4dp"
-            app:cardBackgroundColor="@color/design_default_color_primary">
+            app:strokeWidth="1.5dp"
+            app:strokeColor="#3F51B5"
+            app:cardBackgroundColor="#EEF1FD">
 
             <TextView
                 android:id="@+id/tv_total_price"
@@ -140,9 +202,10 @@
                 android:layout_height="wrap_content"
                 android:text="Total Price: ₹0"
                 android:textStyle="bold"
-                android:textSize="20sp"
-                android:textColor="@color/white"
+                android:textSize="22sp"
+                android:textColor="#3F51B5"
                 android:padding="16dp"
+                android:fontFamily="sans-serif-medium"
                 android:gravity="center" />
         </com.google.android.material.card.MaterialCardView>
 
@@ -150,10 +213,16 @@
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_submit_booking"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Submit Booking"
-            android:textSize="16sp"
-            android:padding="12dp"
-            app:cornerRadius="12dp" />
+            android:layout_height="64dp"
+            android:text="CONFIRM BOOKING"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:letterSpacing="0.05"
+            app:cornerRadius="32dp"
+            app:elevation="8dp"
+            android:fontFamily="sans-serif-medium"
+            android:backgroundTint="#3F51B5"
+            app:rippleColor="#8C9EFF"
+            android:stateListAnimator="@animator/button_animator" />
     </LinearLayout>
 </ScrollView>

@@ -78,6 +78,11 @@ public class HomeFragment extends Fragment {
         db.collection("cars")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
+                    // Check if fragment is still attached to avoid IllegalStateException
+                    if (!isAdded()) {
+                        return;
+                    }
+                    
                     carList.clear();
                     for (QueryDocumentSnapshot snapshot : queryDocumentSnapshots) {
                         Car car = snapshot.toObject(Car.class);
@@ -89,6 +94,11 @@ public class HomeFragment extends Fragment {
                     progressBar.setVisibility(View.GONE);
                 })
                 .addOnFailureListener(e -> {
+                    // Check if fragment is still attached to avoid IllegalStateException
+                    if (!isAdded()) {
+                        return;
+                    }
+                    
                     Toast.makeText(getContext(), "Failed to load cars", Toast.LENGTH_SHORT).show();
                     progressBar.setVisibility(View.GONE);
                 });

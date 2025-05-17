@@ -1,131 +1,148 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="#F5F7FA">
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:padding="24dp"
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        app:popupTheme="@style/ThemeOverlay.AppCompat.Light"/>
 
-        <TextView
-            android:id="@+id/titleTextView"
+    <ScrollView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:padding="24dp"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Edit Profile"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:textColor="#212121"
-            android:layout_marginBottom="24dp"
-            android:gravity="center" />
+            android:layout_height="wrap_content">
 
-        <!-- Profile Image Card -->
-        <androidx.cardview.widget.CardView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            app:cardCornerRadius="75dp"
-            app:cardElevation="6dp"
-            android:layout_marginBottom="24dp">
-
-            <ImageView
-                android:id="@+id/profileImageView"
-                android:layout_width="150dp"
-                android:layout_height="150dp"
-                android:scaleType="centerCrop"
-                android:src="@drawable/ic_launcher_foreground" />
-        </androidx.cardview.widget.CardView>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Tap on image to change profile picture"
-            android:textSize="14sp"
-            android:textColor="#757575"
-            android:gravity="center"
-            android:layout_marginBottom="24dp" />
-
-        <!-- Full Name -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:startIconDrawable="@android:drawable/ic_menu_edit"
-            app:boxStrokeColor="#3F51B5"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-            <EditText
-                android:id="@+id/fullNameEditText"
-                android:hint="Full Name"
+            <TextView
+                android:id="@+id/titleTextView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPersonName" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:text="Edit Profile"
+                android:textSize="28sp"
+                android:textStyle="bold"
+                android:textColor="#212121"
+                android:layout_marginBottom="24dp"
+                android:gravity="center" />
 
-        <!-- Email -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:startIconDrawable="@android:drawable/ic_dialog_email"
-            app:boxStrokeColor="#3F51B5"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+            <!-- Profile Image Card -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                app:cardCornerRadius="75dp"
+                app:cardElevation="6dp"
+                android:layout_marginBottom="16dp">
 
-            <EditText
-                android:id="@+id/emailEditText"
-                android:hint="Email"
-                android:enabled="false"
+    <ImageView
+        android:id="@+id/profileImageView"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:scaleType="centerCrop"
+                    android:src="@drawable/ic_profile_placeholder" />
+            </androidx.cardview.widget.CardView>
+
+            <TextView
+                android:id="@+id/uploadPhotoText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textEmailAddress" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:text="Tap on image to upload profile picture"
+                android:textSize="14sp"
+                android:textColor="#757575"
+                android:gravity="center"
+                android:layout_marginBottom="24dp" />
 
-        <!-- Age -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:startIconDrawable="@android:drawable/ic_menu_recent_history"
-            app:boxStrokeColor="#3F51B5"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
-
-            <EditText
-                android:id="@+id/ageEditText"
-                android:hint="Age"
+            <!-- Full Name -->
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="number" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginBottom="16dp"
+                app:startIconDrawable="@android:drawable/ic_menu_edit"
+                app:boxStrokeColor="#3F51B5"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-        <!-- Address -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="32dp"
-            app:startIconDrawable="@android:drawable/ic_menu_mylocation"
-            app:boxStrokeColor="#3F51B5"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+    <EditText
+        android:id="@+id/fullNameEditText"
+        android:hint="Full Name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+                    android:inputType="textPersonName" />
+            </com.google.android.material.textfield.TextInputLayout>
 
-            <EditText
-                android:id="@+id/addressEditText"
-                android:hint="Address"
+            <!-- Email -->
+            <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:inputType="textPostalAddress"
-                android:minLines="2" />
-        </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginBottom="16dp"
+                app:startIconDrawable="@android:drawable/ic_dialog_email"
+                app:boxStrokeColor="#3F51B5"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-        <!-- Save Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/saveBtn"
-            android:text="Save Profile"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:textSize="16sp"
-            app:cornerRadius="12dp"
-            android:textAllCaps="false" />
-    </LinearLayout>
-</ScrollView>
+    <EditText
+        android:id="@+id/emailEditText"
+        android:hint="Email"
+        android:enabled="false"
+        android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textEmailAddress" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Age -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:startIconDrawable="@android:drawable/ic_menu_recent_history"
+                app:boxStrokeColor="#3F51B5"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+    <EditText
+        android:id="@+id/ageEditText"
+        android:hint="Age"
+        android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Address -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="32dp"
+                app:startIconDrawable="@android:drawable/ic_menu_mylocation"
+                app:boxStrokeColor="#3F51B5"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+    <EditText
+        android:id="@+id/addressEditText"
+        android:hint="Address"
+        android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPostalAddress"
+                    android:minLines="2" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Save Button -->
+            <com.google.android.material.button.MaterialButton
+        android:id="@+id/saveBtn"
+                android:text="Save Profile"
+        android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:textSize="16sp"
+                app:cornerRadius="12dp"
+                android:textAllCaps="false" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

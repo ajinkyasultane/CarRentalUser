@@ -56,7 +56,7 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         Booking booking = bookingList.get(position);
 
-        holder.carName.setText(booking.getCar_name());
+        holder.carName.setText("Car Name: " +booking.getCar_name());
         holder.bookingDates.setText("From: " + booking.getStart_date() + " To: " + booking.getEnd_date());
         holder.location.setText("Pickup: " + booking.getPickup_location());
         
@@ -105,28 +105,28 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
     }
     
     private void cancelBooking(ViewHolder holder, Booking booking) {
-        FirebaseFirestore.getInstance()
-            .collection("bookings")
-            .whereEqualTo("user_id", FirebaseAuth.getInstance().getCurrentUser().getUid())
-            .whereEqualTo("start_date", booking.getStart_date())
-            .whereEqualTo("car_name", booking.getCar_name())
-            .get()
-            .addOnSuccessListener(queryDocumentSnapshots -> {
-                for (DocumentSnapshot snapshot : queryDocumentSnapshots) {
+                FirebaseFirestore.getInstance()
+                        .collection("bookings")
+                        .whereEqualTo("user_id", FirebaseAuth.getInstance().getCurrentUser().getUid())
+                        .whereEqualTo("start_date", booking.getStart_date())
+                        .whereEqualTo("car_name", booking.getCar_name())
+                        .get()
+                        .addOnSuccessListener(queryDocumentSnapshots -> {
+                            for (DocumentSnapshot snapshot : queryDocumentSnapshots) {
                     snapshot.getReference().update("status", "Cancelled")
-                            .addOnSuccessListener(unused -> {
-                                Toast.makeText(holder.itemView.getContext(), "Booking cancelled", Toast.LENGTH_SHORT).show();
+                                        .addOnSuccessListener(unused -> {
+                                            Toast.makeText(holder.itemView.getContext(), "Booking cancelled", Toast.LENGTH_SHORT).show();
                                 booking.setStatus("Cancelled");
                                 notifyDataSetChanged();
-                            })
-                            .addOnFailureListener(e -> {
-                                Toast.makeText(holder.itemView.getContext(), "Cancel failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                            });
-                }
-            })
-            .addOnFailureListener(e -> {
-                Toast.makeText(holder.itemView.getContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-            });
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Toast.makeText(holder.itemView.getContext(), "Cancel failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                        });
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(holder.itemView.getContext(), "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
     }
 
     @Override
