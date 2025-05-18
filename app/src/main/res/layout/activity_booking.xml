@@ -26,8 +26,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <ImageView
-                    android:id="@+id/image_car"
+        <ImageView
+            android:id="@+id/image_car"
                     android:layout_width="match_parent"
                     android:layout_height="240dp"
                     android:scaleType="centerCrop" />
@@ -64,20 +64,20 @@
                     android:layout_weight="1"
                     android:orientation="vertical">
 
-                    <TextView
-                        android:id="@+id/tv_car_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+        <TextView
+            android:id="@+id/tv_car_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
                         android:textSize="24sp"
                         android:textStyle="bold"
                         android:textColor="#212121"
                         android:fontFamily="sans-serif-medium" />
 
-                    <TextView
-                        android:id="@+id/tv_car_price"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="₹0"
+        <TextView
+            android:id="@+id/tv_car_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="₹0"
                         android:textColor="#3F51B5"
                         android:textSize="24sp"
                         android:fontFamily="sans-serif-medium"
@@ -112,7 +112,7 @@
                     android:textStyle="bold"
                     android:textColor="#212121"
                     android:fontFamily="sans-serif-medium"
-                    android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="16dp" />
 
                 <RadioGroup
                     android:id="@+id/driver_option_group"
@@ -208,20 +208,20 @@
                     app:shapeAppearance="@style/ShapeAppearance.MaterialComponents.MediumComponent"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_start_date"
-                        android:focusable="false"
-                        android:layout_width="match_parent"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_start_date"
+                android:focusable="false"
+                android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif" />
-                </com.google.android.material.textfield.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- End Date -->
-                <com.google.android.material.textfield.TextInputLayout
+        <!-- End Date -->
+        <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/end_date_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="End Date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="End Date"
                     android:layout_marginTop="16dp"
                     app:startIconDrawable="@android:drawable/ic_menu_my_calendar"
                     app:startIconTint="#3F51B5"
@@ -231,20 +231,20 @@
                     app:shapeAppearance="@style/ShapeAppearance.MaterialComponents.MediumComponent"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_end_date"
-                        android:focusable="false"
-                        android:layout_width="match_parent"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_end_date"
+                android:focusable="false"
+                android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif" />
-                </com.google.android.material.textfield.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Pickup Location -->
-                <com.google.android.material.textfield.TextInputLayout
+        <!-- Pickup Location -->
+        <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/pickup_location_layout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="Pickup Location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Pickup Location"
                     android:layout_marginTop="16dp"
                     app:startIconDrawable="@android:drawable/ic_menu_mylocation"
                     app:startIconTint="#3F51B5"
@@ -258,12 +258,12 @@
                     app:shapeAppearance="@style/ShapeAppearance.MaterialComponents.MediumComponent"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-                    <com.google.android.material.textfield.TextInputEditText
-                        android:id="@+id/et_pickup_location"
-                        android:layout_width="match_parent"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/et_pickup_location"
+                android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif" />
-                </com.google.android.material.textfield.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Track Location Button (For Without Driver option) -->
                 <com.google.android.material.button.MaterialButton
@@ -295,12 +295,12 @@
             app:strokeColor="#3F51B5"
             app:cardBackgroundColor="#EEF1FD">
 
-            <TextView
-                android:id="@+id/tv_total_price"
+        <TextView
+            android:id="@+id/tv_total_price"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Total Price: ₹0"
-                android:textStyle="bold"
+            android:layout_height="wrap_content"
+            android:text="Total Price: ₹0"
+            android:textStyle="bold"
                 android:textSize="22sp"
                 android:textColor="#3F51B5"
                 android:padding="16dp"

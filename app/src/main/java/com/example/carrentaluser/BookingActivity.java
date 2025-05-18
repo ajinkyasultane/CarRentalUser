@@ -105,10 +105,30 @@ public class BookingActivity extends AppCompatActivity {
         // Set up driver option radio buttons
         setupDriverOptions();
         
-        // Show initial notice about with-driver limitations
+        // Apply initial visibility rules based on selected driver option
         if (radioWithDriver.isChecked()) {
+            // With Driver flow initially - show all fields
+            startDateLayout.setVisibility(View.VISIBLE);
+            endDateLayout.setVisibility(View.VISIBLE);
+            pickupLayout.setVisibility(View.VISIBLE);
+            btnTrackLocation.setVisibility(View.GONE);
+            tvTotalPrice.setVisibility(View.VISIBLE);
+            btnSubmit.setVisibility(View.VISIBLE);
+            
             Toast.makeText(BookingActivity.this, 
                 "With driver service is only available within 50km of our branches", 
+                Toast.LENGTH_LONG).show();
+        } else {
+            // Without Driver flow initially - ultra simplified experience
+            startDateLayout.setVisibility(View.GONE);  // Hide start date
+            endDateLayout.setVisibility(View.GONE);    // Hide end date
+            pickupLayout.setVisibility(View.GONE);     // Hide pickup location field
+            tvTotalPrice.setVisibility(View.GONE);     // Hide total price
+            btnSubmit.setVisibility(View.GONE);        // Hide confirm booking button
+            // Track location button visibility will be set when branch is selected
+            
+            Toast.makeText(BookingActivity.this, 
+                "Please meet at our nearest branch for pickup", 
                 Toast.LENGTH_LONG).show();
         }
         
@@ -325,6 +345,11 @@ public class BookingActivity extends AppCompatActivity {
                                 Log.d("BookingActivity", "Branch coordinates: " + selectedBranchLatitude + 
                                       ", " + selectedBranchLongitude);
                                 
+                                // If in "Without Driver" mode, show the track location button
+                                if (radioWithoutDriver.isChecked()) {
+                                    btnTrackLocation.setVisibility(View.VISIBLE);
+                                }
+                                
                                 // If location is already selected and "With Driver" is selected, check distance
                                 if (radioWithDriver.isChecked() && selectedLatitude != 0 && selectedLongitude != 0) {
                                     checkDistanceFromBranch();
@@ -411,11 +436,13 @@ public class BookingActivity extends AppCompatActivity {
     private void setupDriverOptions() {
         driverOptionGroup.setOnCheckedChangeListener((group, checkedId) -> {
             if (checkedId == R.id.radio_with_driver) {
-                // With Driver flow
+                // With Driver flow - show all fields
                 startDateLayout.setVisibility(View.VISIBLE);
                 endDateLayout.setVisibility(View.VISIBLE);
                 pickupLayout.setVisibility(View.VISIBLE);
                 btnTrackLocation.setVisibility(View.GONE);
+                tvTotalPrice.setVisibility(View.VISIBLE);
+                btnSubmit.setVisibility(View.VISIBLE);
                 
                 // Clear pickup location when switching to "With Driver" to force revalidation
                 if (selectedLatitude != 0 && selectedLongitude != 0 && !selectedBranchId.isEmpty()) {
@@ -429,11 +456,20 @@ public class BookingActivity extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
                 }
             } else {
-                // Without Driver flow
-                startDateLayout.setVisibility(View.VISIBLE);
-                endDateLayout.setVisibility(View.VISIBLE);
-                pickupLayout.setVisibility(View.GONE);
-                btnTrackLocation.setVisibility(View.VISIBLE);
+                // Without Driver flow - ultra simplified experience
+                // Hide everything except branch dropdown and track button
+                startDateLayout.setVisibility(View.GONE);  // Hide start date
+                endDateLayout.setVisibility(View.GONE);    // Hide end date
+                pickupLayout.setVisibility(View.GONE);     // Hide pickup location field
+                tvTotalPrice.setVisibility(View.GONE);     // Hide total price
+                btnSubmit.setVisibility(View.GONE);        // Hide confirm booking button
+                
+                // Show track location button if a branch is selected
+                if (!selectedBranchId.isEmpty() && selectedBranchLatitude != 0 && selectedBranchLongitude != 0) {
+                    btnTrackLocation.setVisibility(View.VISIBLE);
+                } else {
+                    btnTrackLocation.setVisibility(View.GONE);
+                }
                 
                 // Show toast message
                 Toast.makeText(BookingActivity.this, 
@@ -445,17 +481,29 @@ public class BookingActivity extends AppCompatActivity {
     
     private void setupTrackLocationButton() {
         btnTrackLocation.setOnClickListener(v -> {
-            if (selectedBranchId.isEmpty()) {
+            if (selectedBranchId.isEmpty() || selectedBranchLatitude == 0 || selectedBranchLongitude == 0) {
                 Toast.makeText(BookingActivity.this, 
                     "Please select a branch first", 
                     Toast.LENGTH_SHORT).show();
+                branchesDropdown.requestFocus();
+                branchesDropdown.showDropDown();
                 return;
             }
             
+            Log.d("BookingActivity", "Track location button clicked. Branch ID: " + selectedBranchId);
+            Log.d("BookingActivity", "Branch coordinates: " + selectedBranchLatitude + ", " + selectedBranchLongitude);
+            
+            // Launch map activity in track branch mode
             Intent intent = new Intent(BookingActivity.this, MapSelectionActivity.class);
-            intent.putExtra("track_branch", true);
+            intent.putExtra("track_branch", true); // This will trigger branch tracking mode
             intent.putExtra("branch_latitude", selectedBranchLatitude);
             intent.putExtra("branch_longitude", selectedBranchLongitude);
+            intent.putExtra("branch_name", branchesDropdown.getText().toString());
+            
+            // Pass additional flags for clarity
+            intent.putExtra("show_route", true);
+            intent.putExtra("from_no_driver_mode", true);
+            
             startActivity(intent);
         });
     }
