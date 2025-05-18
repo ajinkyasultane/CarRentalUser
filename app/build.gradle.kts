@@ -61,4 +61,7 @@ dependencies {
     // Location and directions
     implementation ("com.google.android.gms:play-services-location:21.2.0")
     implementation ("com.google.maps.android:android-maps-utils:3.4.0")
+    
+    // OkHttp for network requests
+    implementation ("com.squareup.okhttp3:okhttp:4.11.0")
 }

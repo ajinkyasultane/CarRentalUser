@@ -3,9 +3,16 @@ package com.example.carrentaluser;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.location.Location;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,21 +27,29 @@ import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.GeoPoint;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class BookingActivity extends AppCompatActivity {
 
     private ImageView imageCar;
     private TextView tvCarName, tvCarPrice, tvTotalPrice;
     private TextInputEditText etStartDate, etEndDate, etPickupLocation;
-    private TextInputLayout pickupLayout;
-    private Button btnSubmit;
+    private TextInputLayout pickupLayout, branchesDropdownLayout, startDateLayout, endDateLayout;
+    private AutoCompleteTextView branchesDropdown;
+    private RadioGroup driverOptionGroup;
+    private RadioButton radioWithDriver, radioWithoutDriver;
+    private Button btnSubmit, btnTrackLocation;
 
     private String carName, carImageUrl;
     private int carPrice;
@@ -49,6 +64,13 @@ public class BookingActivity extends AppCompatActivity {
     // Store location details
     private double selectedLatitude = 0;
     private double selectedLongitude = 0;
+    
+    // Store branch details
+    private List<Map<String, Object>> branchList = new ArrayList<>();
+    private String selectedBranchId = "";
+    private double selectedBranchLatitude = 0;
+    private double selectedBranchLongitude = 0;
+    private static final double MAX_DISTANCE_KM = 50.0; // Maximum distance in kilometers
     
     // Activity result launcher for map selection
     private ActivityResultLauncher<Intent> mapSelectionLauncher;
@@ -70,12 +92,28 @@ public class BookingActivity extends AppCompatActivity {
 
         // Check user profile completion
         checkProfileCompletion();
+        
+        // Fetch branches from Firebase
+        fetchBranches();
 
         // Set up date pickers
         setupDatePickers();
         
         // Set up location picker
         setupLocationPicker();
+        
+        // Set up driver option radio buttons
+        setupDriverOptions();
+        
+        // Show initial notice about with-driver limitations
+        if (radioWithDriver.isChecked()) {
+            Toast.makeText(BookingActivity.this, 
+                "With driver service is only available within 50km of our branches", 
+                Toast.LENGTH_LONG).show();
+        }
+        
+        // Set up track location button
+        setupTrackLocationButton();
 
         // Set up submit button
         btnSubmit.setOnClickListener(v -> {
@@ -92,16 +130,38 @@ public class BookingActivity extends AppCompatActivity {
             result -> {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     Intent data = result.getData();
-                    selectedLatitude = data.getDoubleExtra("latitude", 0);
-                    selectedLongitude = data.getDoubleExtra("longitude", 0);
+                    double latitude = data.getDoubleExtra("latitude", 0);
+                    double longitude = data.getDoubleExtra("longitude", 0);
                     String locationName = data.getStringExtra("location_name");
                     
-                    if (locationName != null && !locationName.isEmpty()) {
-                        etPickupLocation.setText(locationName);
+                    // Only update coordinates if they're valid
+                    if (latitude != 0 && longitude != 0) {
+                        selectedLatitude = latitude;
+                        selectedLongitude = longitude;
+                        
+                        Log.d("BookingActivity", "Location selected: " + latitude + ", " + longitude);
+                        
+                        if (locationName != null && !locationName.isEmpty()) {
+                            etPickupLocation.setText(locationName);
+                            
+                            // Check distance from selected branch if "With Driver" is selected
+                            if (radioWithDriver.isChecked() && !selectedBranchId.isEmpty()) {
+                                if (selectedBranchLatitude != 0 && selectedBranchLongitude != 0) {
+                                    checkDistanceFromBranch();
+                                } else {
+                                    Log.e("BookingActivity", "Branch coordinates not available for distance check");
+                                }
+                            }
+                        }
+                    } else {
+                        Log.e("BookingActivity", "Invalid location coordinates received");
                     }
                 }
             }
         );
+        
+        // DEVELOPMENT ONLY: Uncomment the line below to add sample branch data with proper location coordinates
+        // addSampleBranchData();
     }
 
     private void initializeViews() {
@@ -113,7 +173,15 @@ public class BookingActivity extends AppCompatActivity {
         etEndDate = findViewById(R.id.et_end_date);
         etPickupLocation = findViewById(R.id.et_pickup_location);
         pickupLayout = findViewById(R.id.pickup_location_layout);
+        branchesDropdownLayout = findViewById(R.id.branches_dropdown_layout);
+        branchesDropdown = findViewById(R.id.branches_dropdown);
+        driverOptionGroup = findViewById(R.id.driver_option_group);
+        radioWithDriver = findViewById(R.id.radio_with_driver);
+        radioWithoutDriver = findViewById(R.id.radio_without_driver);
         btnSubmit = findViewById(R.id.btn_submit_booking);
+        btnTrackLocation = findViewById(R.id.btn_track_location);
+        startDateLayout = findViewById(R.id.start_date_layout);
+        endDateLayout = findViewById(R.id.end_date_layout);
 
         // Set minimum date to today
         minDate = Calendar.getInstance();
@@ -128,12 +196,160 @@ public class BookingActivity extends AppCompatActivity {
         carImageUrl = getIntent().getStringExtra("car_image");
         carPrice = getIntent().getIntExtra("car_price", 0);
 
-        tvCarName.setText("Car Name :"+carName);
+        tvCarName.setText("Car Name: "+carName);
         tvCarPrice.setText("₹" + carPrice+" Per Day");
         Glide.with(this)
             .load(carImageUrl)
             .centerCrop()
             .into(imageCar);
+    }
+    
+    private void fetchBranches() {
+        branchesDropdown.setEnabled(false);
+        
+        db.collection("branches")
+            .get()
+            .addOnSuccessListener(queryDocumentSnapshots -> {
+                branchList.clear();
+                List<String> branchNames = new ArrayList<>();
+                
+                for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+                    try {
+                        String branchName = document.getString("name");
+                        if (branchName != null) {
+                            Map<String, Object> branchData = new HashMap<>();
+                            branchData.put("id", document.getId());
+                            branchData.put("name", branchName);
+                            
+                            // Get location data if available
+                            GeoPoint location = document.getGeoPoint("location");
+                            if (location != null) {
+                                Log.d("BookingActivity", "Branch " + branchName + " location: " + 
+                                    location.getLatitude() + ", " + location.getLongitude());
+                                branchData.put("latitude", location.getLatitude());
+                                branchData.put("longitude", location.getLongitude());
+                            } else {
+                                // Try to get latitude and longitude as separate fields
+                                Object latObj = document.get("latitude");
+                                Object lngObj = document.get("longitude");
+                                
+                                if (latObj != null && lngObj != null) {
+                                    double lat = 0;
+                                    double lng = 0;
+                                    
+                                    // Handle different possible types
+                                    if (latObj instanceof Double) {
+                                        lat = (Double) latObj;
+                                    } else if (latObj instanceof Long) {
+                                        lat = ((Long) latObj).doubleValue();
+                                    } else if (latObj instanceof String) {
+                                        lat = Double.parseDouble((String) latObj);
+                                    }
+                                    
+                                    if (lngObj instanceof Double) {
+                                        lng = (Double) lngObj;
+                                    } else if (lngObj instanceof Long) {
+                                        lng = ((Long) lngObj).doubleValue();
+                                    } else if (lngObj instanceof String) {
+                                        lng = Double.parseDouble((String) lngObj);
+                                    }
+                                    
+                                    if (lat != 0 && lng != 0) {
+                                        Log.d("BookingActivity", "Branch " + branchName + 
+                                            " location from separate fields: " + lat + ", " + lng);
+                                        branchData.put("latitude", lat);
+                                        branchData.put("longitude", lng);
+                                    } else {
+                                        Log.e("BookingActivity", "Branch " + branchName + 
+                                            " has invalid coordinates: " + latObj + ", " + lngObj);
+                                    }
+                                } else {
+                                    Log.e("BookingActivity", "Branch " + branchName + " has no location data");
+                                }
+                            }
+                            
+                            branchData.put("address", document.getString("address"));
+                            branchList.add(branchData);
+                            branchNames.add(branchName);
+                        }
+                    } catch (Exception e) {
+                        Log.e("BookingActivity", "Error processing branch data: " + e.getMessage());
+                    }
+                }
+                
+                if (branchNames.isEmpty()) {
+                    Toast.makeText(BookingActivity.this, 
+                        "No branches found. Please contact support.", 
+                        Toast.LENGTH_LONG).show();
+                    return;
+                }
+                
+                // Set up the dropdown adapter
+                ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                    BookingActivity.this, 
+                    android.R.layout.simple_dropdown_item_1line, 
+                    branchNames
+                );
+                branchesDropdown.setAdapter(adapter);
+                branchesDropdown.setEnabled(true);
+                
+                // Set item click listener
+                branchesDropdown.setOnItemClickListener((parent, view, position, id) -> {
+                    if (position < branchList.size()) {
+                        Map<String, Object> selectedBranch = branchList.get(position);
+                        selectedBranchId = (String) selectedBranch.get("id");
+                        
+                        Log.d("BookingActivity", "Selected branch ID: " + selectedBranchId);
+                        
+                        Object latObj = selectedBranch.get("latitude");
+                        Object lngObj = selectedBranch.get("longitude");
+                        
+                        if (latObj != null && lngObj != null) {
+                            try {
+                                if (latObj instanceof Double) {
+                                    selectedBranchLatitude = (Double) latObj;
+                                } else if (latObj instanceof Long) {
+                                    selectedBranchLatitude = ((Long) latObj).doubleValue();
+                                } else if (latObj instanceof String) {
+                                    selectedBranchLatitude = Double.parseDouble((String) latObj);
+                                }
+                                
+                                if (lngObj instanceof Double) {
+                                    selectedBranchLongitude = (Double) lngObj;
+                                } else if (lngObj instanceof Long) {
+                                    selectedBranchLongitude = ((Long) lngObj).doubleValue();
+                                } else if (lngObj instanceof String) {
+                                    selectedBranchLongitude = Double.parseDouble((String) lngObj);
+                                }
+                                
+                                Log.d("BookingActivity", "Branch coordinates: " + selectedBranchLatitude + 
+                                      ", " + selectedBranchLongitude);
+                                
+                                // If location is already selected and "With Driver" is selected, check distance
+                                if (radioWithDriver.isChecked() && selectedLatitude != 0 && selectedLongitude != 0) {
+                                    checkDistanceFromBranch();
+                                }
+                            } catch (Exception e) {
+                                Log.e("BookingActivity", "Error parsing branch coordinates: " + e.getMessage());
+                                Toast.makeText(BookingActivity.this, 
+                                    "Error reading branch location data. Please try another branch.", 
+                                    Toast.LENGTH_LONG).show();
+                            }
+                        } else {
+                            Log.e("BookingActivity", "Branch location coordinates not found!");
+                            Toast.makeText(BookingActivity.this, 
+                                "This branch doesn't have location data. Please select another branch or contact support.", 
+                                Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+            })
+            .addOnFailureListener(e -> {
+                Log.e("BookingActivity", "Failed to load branches: " + e.getMessage());
+                Toast.makeText(BookingActivity.this, 
+                    "Failed to load branches: " + e.getMessage(), 
+                    Toast.LENGTH_SHORT).show();
+            });
     }
 
     private void checkProfileCompletion() {
@@ -190,6 +406,58 @@ public class BookingActivity extends AppCompatActivity {
             .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
             .setCancelable(false)
             .show();
+    }
+    
+    private void setupDriverOptions() {
+        driverOptionGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.radio_with_driver) {
+                // With Driver flow
+                startDateLayout.setVisibility(View.VISIBLE);
+                endDateLayout.setVisibility(View.VISIBLE);
+                pickupLayout.setVisibility(View.VISIBLE);
+                btnTrackLocation.setVisibility(View.GONE);
+                
+                // Clear pickup location when switching to "With Driver" to force revalidation
+                if (selectedLatitude != 0 && selectedLongitude != 0 && !selectedBranchId.isEmpty()) {
+                    // If location is already selected, check distance from branch
+                    checkDistanceFromBranch();
+                } else if (!etPickupLocation.getText().toString().isEmpty()) {
+                    // If there's text in the pickup field but no coordinates, clear it
+                    etPickupLocation.setText("");
+                    Toast.makeText(BookingActivity.this, 
+                        "Please select a pickup location within 50km of the branch", 
+                        Toast.LENGTH_LONG).show();
+                }
+            } else {
+                // Without Driver flow
+                startDateLayout.setVisibility(View.VISIBLE);
+                endDateLayout.setVisibility(View.VISIBLE);
+                pickupLayout.setVisibility(View.GONE);
+                btnTrackLocation.setVisibility(View.VISIBLE);
+                
+                // Show toast message
+                Toast.makeText(BookingActivity.this, 
+                    "Please meet at our nearest branch for pickup", 
+                    Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+    
+    private void setupTrackLocationButton() {
+        btnTrackLocation.setOnClickListener(v -> {
+            if (selectedBranchId.isEmpty()) {
+                Toast.makeText(BookingActivity.this, 
+                    "Please select a branch first", 
+                    Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            Intent intent = new Intent(BookingActivity.this, MapSelectionActivity.class);
+            intent.putExtra("track_branch", true);
+            intent.putExtra("branch_latitude", selectedBranchLatitude);
+            intent.putExtra("branch_longitude", selectedBranchLongitude);
+            startActivity(intent);
+        });
     }
 
     private void setupDatePickers() {
@@ -280,34 +548,187 @@ public class BookingActivity extends AppCompatActivity {
         etPickupLocation.setClickable(true);
         
         // Set click listener for the pickup location field
-        etPickupLocation.setOnClickListener(v -> openMapSelection());
+        etPickupLocation.setOnClickListener(v -> {
+            Log.d("BookingActivity", "Opening map selection. Current branch ID: " + selectedBranchId);
+            
+            if (selectedBranchId.isEmpty()) {
+                Toast.makeText(BookingActivity.this, 
+                    "Please select a branch first", 
+                    Toast.LENGTH_SHORT).show();
+                branchesDropdown.requestFocus();
+                branchesDropdown.showDropDown();
+            } else {
+                if (selectedBranchLatitude == 0 || selectedBranchLongitude == 0) {
+                    Log.e("BookingActivity", "Branch location coordinates are missing!");
+                    Toast.makeText(BookingActivity.this, 
+                        "Branch location data is missing. Please select a different branch.", 
+                        Toast.LENGTH_LONG).show();
+                    
+                    // Reset branch selection
+                    branchesDropdown.setText("");
+                    selectedBranchId = "";
+                    branchesDropdown.requestFocus();
+                    branchesDropdown.showDropDown();
+                } else {
+                    openMapSelection();
+                }
+            }
+        });
         
         // Add a trailing icon to the TextInputLayout for the pickup location
         pickupLayout.setEndIconMode(TextInputLayout.END_ICON_CUSTOM);
         pickupLayout.setEndIconDrawable(R.drawable.ic_map);
         pickupLayout.setEndIconContentDescription("Select location on map");
-        pickupLayout.setEndIconOnClickListener(v -> openMapSelection());
+        pickupLayout.setEndIconOnClickListener(v -> {
+            Log.d("BookingActivity", "Map icon clicked. Current branch ID: " + selectedBranchId);
+            
+            if (selectedBranchId.isEmpty()) {
+                Toast.makeText(BookingActivity.this, 
+                    "Please select a branch first", 
+                    Toast.LENGTH_SHORT).show();
+                branchesDropdown.requestFocus();
+                branchesDropdown.showDropDown();
+            } else {
+                if (selectedBranchLatitude == 0 || selectedBranchLongitude == 0) {
+                    Log.e("BookingActivity", "Branch location coordinates are missing!");
+                    Toast.makeText(BookingActivity.this, 
+                        "Branch location data is missing. Please select a different branch.", 
+                        Toast.LENGTH_LONG).show();
+                    
+                    // Reset branch selection
+                    branchesDropdown.setText("");
+                    selectedBranchId = "";
+                    branchesDropdown.requestFocus();
+                    branchesDropdown.showDropDown();
+                } else {
+                    openMapSelection();
+                }
+            }
+        });
     }
     
     private void openMapSelection() {
+        // Check if branch is selected - only need to verify selectedBranchId is not empty
+        if (selectedBranchId.isEmpty()) {
+            Toast.makeText(BookingActivity.this, 
+                "Please select a branch first", 
+                Toast.LENGTH_SHORT).show();
+            branchesDropdown.requestFocus();
+            branchesDropdown.showDropDown();
+            return;
+        }
+        
         Intent intent = new Intent(BookingActivity.this, MapSelectionActivity.class);
+        
+        // Pass branch location for 50km restriction if in with-driver mode
+        intent.putExtra("with_driver_mode", radioWithDriver.isChecked());
+        intent.putExtra("branch_latitude", selectedBranchLatitude);
+        intent.putExtra("branch_longitude", selectedBranchLongitude);
+        
         // Pass current location if already selected
         if (selectedLatitude != 0 && selectedLongitude != 0) {
             intent.putExtra("current_latitude", selectedLatitude);
             intent.putExtra("current_longitude", selectedLongitude);
         }
+        
         mapSelectionLauncher.launch(intent);
+    }
+    
+    private void checkDistanceFromBranch() {
+        if (selectedBranchLatitude == 0 || selectedBranchLongitude == 0 || 
+            selectedLatitude == 0 || selectedLongitude == 0) {
+            return;
+        }
+        
+        // Calculate distance between pickup location and branch
+        float[] results = new float[1];
+        Location.distanceBetween(
+            selectedLatitude, selectedLongitude,
+            selectedBranchLatitude, selectedBranchLongitude,
+            results
+        );
+        
+        // Convert meters to kilometers
+        double distanceKm = results[0] / 1000.0;
+        
+        // Check if distance exceeds maximum allowed
+        if (distanceKm > MAX_DISTANCE_KM) {
+            showMaxDistanceExceededDialog();
+        }
+    }
+    
+    private void showMaxDistanceExceededDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle("Location Too Far")
+            .setMessage("Your selected pickup location is more than 50km away from the chosen branch. " +
+                        "With driver service is only available within 50km of our branches.\n\n" +
+                        "Please select a closer location, choose a different branch, or use the 'Without Driver' option.")
+            .setPositiveButton("Switch to Without Driver", (dialog, which) -> {
+                radioWithoutDriver.setChecked(true);
+            })
+            .setNegativeButton("Select Different Location", (dialog, which) -> {
+                openMapSelection();
+            })
+            .setNeutralButton("Choose Different Branch", (dialog, which) -> {
+                branchesDropdown.setText("");
+                selectedBranchId = "";
+                branchesDropdown.showDropDown();
+            })
+            .setCancelable(false)
+            .show();
     }
 
     private void submitBooking() {
         String startDate = etStartDate.getText().toString();
         String endDate = etEndDate.getText().toString();
-        String pickup = etPickupLocation.getText().toString().trim();
+        String pickup = radioWithDriver.isChecked() ? etPickupLocation.getText().toString().trim() : "";
+        String branch = branchesDropdown.getText().toString().trim();
 
         // Validate inputs
-        if (startDate.isEmpty() || endDate.isEmpty() || pickup.isEmpty()) {
-            Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
+        if (startDate.isEmpty() || endDate.isEmpty() || branch.isEmpty()) {
+            Toast.makeText(this, "Please fill all required fields", Toast.LENGTH_SHORT).show();
             return;
+        }
+        
+        if (radioWithDriver.isChecked() && pickup.isEmpty()) {
+            Toast.makeText(this, "Please select a pickup location", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        if (selectedBranchId.isEmpty()) {
+            Toast.makeText(this, "Please select a valid branch", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        // Check distance again if "With Driver" is selected to prevent booking beyond 50km
+        if (radioWithDriver.isChecked() && 
+            selectedBranchLatitude != 0 && selectedBranchLongitude != 0 &&
+            selectedLatitude != 0 && selectedLongitude != 0) {
+            
+            float[] results = new float[1];
+            Location.distanceBetween(
+                selectedLatitude, selectedLongitude,
+                selectedBranchLatitude, selectedBranchLongitude,
+                results
+            );
+            
+            double distanceKm = results[0] / 1000.0;
+            
+            if (distanceKm > MAX_DISTANCE_KM) {
+                new AlertDialog.Builder(this)
+                    .setTitle("Cannot Book With Driver")
+                    .setMessage("Booking with driver is not allowed for locations beyond 50km from our branch. " +
+                                "Please select a closer location or use the 'Without Driver' option.")
+                    .setPositiveButton("Switch to Without Driver", (dialog, which) -> {
+                        radioWithoutDriver.setChecked(true);
+                    })
+                    .setNegativeButton("Select Different Location", (dialog, which) -> {
+                        openMapSelection();
+                    })
+                    .setCancelable(false)
+                    .show();
+                return;
+            }
         }
 
         try {
@@ -331,17 +752,30 @@ public class BookingActivity extends AppCompatActivity {
             booking.put("car_price", carPrice);
             booking.put("start_date", startDate);
             booking.put("end_date", endDate);
-            booking.put("pickup_location", pickup);
+            booking.put("branch_id", selectedBranchId);
+            booking.put("branch_name", branch);
+            booking.put("with_driver", radioWithDriver.isChecked());
             booking.put("total_price", totalPrice);
             booking.put("status", "Pending");
             booking.put("user_id", userId);
             booking.put("user_email", userEmail);
             booking.put("booking_date", sdf.format(new Date()));
             
-            // Add location coordinates if selected from map
-            if (selectedLatitude != 0 && selectedLongitude != 0) {
-                booking.put("latitude", selectedLatitude);
-                booking.put("longitude", selectedLongitude);
+            // Add pickup location for "With Driver" option
+            if (radioWithDriver.isChecked()) {
+                booking.put("pickup_location", pickup);
+                
+                // Add location coordinates if selected from map
+                if (selectedLatitude != 0 && selectedLongitude != 0) {
+                    booking.put("pickup_latitude", selectedLatitude);
+                    booking.put("pickup_longitude", selectedLongitude);
+                }
+            }
+            
+            // Add branch location
+            if (selectedBranchLatitude != 0 && selectedBranchLongitude != 0) {
+                booking.put("branch_latitude", selectedBranchLatitude);
+                booking.put("branch_longitude", selectedBranchLongitude);
             }
 
             // Show loading state
@@ -372,5 +806,15 @@ public class BookingActivity extends AppCompatActivity {
         super.onResume();
         // Check again when user returns from EditProfileActivity
         checkProfileCompletion();
+    }
+
+    private void addSampleBranchData() {
+        // This method is for development purposes only
+        FirestoreDataHelper.addSampleBranchData(this);
+        
+        // Reload branches after a short delay
+        new android.os.Handler().postDelayed(() -> {
+            fetchBranches();
+        }, 2000);
     }
 }
