@@ -13,41 +13,59 @@
         android:padding="16dp"
         android:animateLayoutChanges="true">
 
-        <!-- Car Image Card -->
+        <!-- Car Image Card with Enhanced Styling -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            app:cardCornerRadius="24dp"
-            app:cardElevation="8dp"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="12dp"
             android:transitionName="carImageTransition">
 
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-        <ImageView
-            android:id="@+id/image_car"
+                <ImageView
+                    android:id="@+id/image_car"
                     android:layout_width="match_parent"
-                    android:layout_height="240dp"
+                    android:layout_height="200dp"
                     android:scaleType="centerCrop" />
 
+                <!-- Enhanced Gradient Overlay for Better Text Visibility -->
                 <View
                     android:layout_width="match_parent"
                     android:layout_height="100dp"
                     android:layout_gravity="bottom"
                     android:background="@drawable/gradient_overlay" />
+
+                <!-- Add vehicle name label over image for dramatic effect -->
+<!--                <TextView-->
+<!--                    android:id="@+id/car_label_overlay"-->
+<!--                    android:layout_width="wrap_content"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:layout_gravity="bottom|start"-->
+<!--                    android:layout_margin="24dp"-->
+<!--                    android:text="Premium Vehicle"-->
+<!--                    android:textColor="#FFFFFF"-->
+<!--                    android:textSize="28sp"-->
+<!--                    android:fontFamily="sans-serif-medium"-->
+<!--                    android:textStyle="bold"-->
+<!--                    android:shadowColor="#80000000"-->
+<!--                    android:shadowDx="2"-->
+<!--                    android:shadowDy="2"-->
+<!--                    android:shadowRadius="4" />-->
             </FrameLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Car Details Card -->
+        <!-- Car Details Card with Enhanced Visual Effect -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            app:cardCornerRadius="18dp"
-            app:cardElevation="4dp"
-            android:alpha="0.95"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="8dp"
+            android:alpha="0.97"
             app:strokeWidth="0.5dp"
             app:strokeColor="#D0D5E1">
 
@@ -55,7 +73,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="20dp"
+                android:padding="24dp"
                 android:background="@drawable/card_bg_gradient">
 
                 <LinearLayout
@@ -64,36 +82,60 @@
                     android:layout_weight="1"
                     android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tv_car_name"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-                        android:textSize="24sp"
+                    <TextView
+                        android:id="@+id/tv_car_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="20sp"
                         android:textStyle="bold"
                         android:textColor="#212121"
                         android:fontFamily="sans-serif-medium" />
 
-        <TextView
-            android:id="@+id/tv_car_price"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="₹0"
-                        android:textColor="#3F51B5"
-                        android:textSize="24sp"
-                        android:fontFamily="sans-serif-medium"
-                        android:textStyle="bold" />
+<!--                    <TextView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="Premium Rental"-->
+<!--                        android:textColor="#757575"-->
+<!--                        android:textSize="14sp"-->
+<!--                        android:layout_marginTop="4dp"-->
+<!--                        android:fontFamily="sans-serif-light" />-->
                 </LinearLayout>
 
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="end">
+
+                    <TextView
+                        android:id="@+id/tv_car_price"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="₹0"
+                        android:textColor="#3F51B5"
+                        android:textSize="20sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textStyle="bold" />
+
+<!--                    <TextView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="per day"-->
+<!--                        android:textColor="#757575"-->
+<!--                        android:textSize="14sp"-->
+<!--                        android:layout_marginTop="4dp"-->
+<!--                        android:fontFamily="sans-serif-light" />-->
+                </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Driver Option Selection Card -->
+        <!-- Driver Option Selection Card with Enhanced Visual Appeal -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            app:cardCornerRadius="18dp"
-            app:cardElevation="4dp"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="6dp"
             android:alpha="0.98"
             android:stateListAnimator="@animator/card_elevation_animator">
 
@@ -104,53 +146,91 @@
                 android:padding="24dp"
                 android:background="@drawable/card_bg_white">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Driver Options"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:textColor="#212121"
-                    android:fontFamily="sans-serif-medium"
-            android:layout_marginBottom="16dp" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="20dp">
 
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_car_new"
+                        app:tint="#3F51B5"
+                        android:layout_marginEnd="12dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Driver Options"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:fontFamily="sans-serif-medium" />
+                </LinearLayout>
+
+                <!-- Enhanced Radio Button Group with Visual Improvements -->
                 <RadioGroup
                     android:id="@+id/driver_option_group"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:orientation="vertical">
 
                     <com.google.android.material.radiobutton.MaterialRadioButton
                         android:id="@+id/radio_with_driver"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:text="With Driver"
                         android:checked="true"
                         android:textSize="16sp"
-                        android:paddingStart="8dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
                         android:buttonTint="#3F51B5" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Professional driver included with your booking"
+                        android:textColor="#757575"
+                        android:textSize="14sp"
+                        android:layout_marginStart="36dp"
+                        android:layout_marginBottom="12dp"
+                        android:fontFamily="sans-serif-light" />
 
                     <com.google.android.material.radiobutton.MaterialRadioButton
                         android:id="@+id/radio_without_driver"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
                         android:text="Without Driver"
                         android:textSize="16sp"
-                        android:paddingStart="8dp"
+                        android:paddingStart="12dp"
+                        android:paddingEnd="12dp"
+                        android:paddingTop="8dp"
+                        android:paddingBottom="8dp"
                         android:buttonTint="#3F51B5" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Drive yourself with our self-drive option"
+                        android:textColor="#757575"
+                        android:textSize="14sp"
+                        android:layout_marginStart="36dp"
+                        android:fontFamily="sans-serif-light" />
                 </RadioGroup>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Booking Details Card -->
+        <!-- Booking Details Card with Better Visual Organization -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            app:cardCornerRadius="18dp"
-            app:cardElevation="4dp"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="6dp"
             android:alpha="0.98"
             android:stateListAnimator="@animator/card_elevation_animator">
 
@@ -161,17 +241,31 @@
                 android:padding="24dp"
                 android:background="@drawable/card_bg_white">
 
-                <TextView
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Booking Details"
-                    android:textSize="20sp"
-                    android:textStyle="bold"
-                    android:textColor="#212121"
-                    android:fontFamily="sans-serif-medium"
-                    android:layout_marginBottom="20dp" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="24dp">
 
-                <!-- Branch Selection Dropdown -->
+                    <ImageView
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
+                        android:src="@drawable/ic_booking"
+                        app:tint="#3F51B5"
+                        android:layout_marginEnd="12dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Booking Details"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="#212121"
+                        android:fontFamily="sans-serif-medium" />
+                </LinearLayout>
+
+                <!-- Branch Selection Dropdown with Enhanced Visual Style -->
                 <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/branches_dropdown_layout"
                     android:layout_width="match_parent"
@@ -193,58 +287,69 @@
                         android:fontFamily="sans-serif" />
                 </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Start Date -->
-                <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/start_date_layout"
+                <!-- Date Selection with Enhanced Layout -->
+                <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Start Date"
+                    android:orientation="horizontal"
                     android:layout_marginTop="16dp"
-                    app:startIconDrawable="@android:drawable/ic_menu_my_calendar"
-                    app:startIconTint="#3F51B5"
-                    app:boxStrokeColor="#3F51B5"
-                    app:hintTextColor="#3F51B5"
-                    app:boxStrokeWidth="1.5dp"
-                    app:shapeAppearance="@style/ShapeAppearance.MaterialComponents.MediumComponent"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                    android:baselineAligned="false">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/et_start_date"
-                android:focusable="false"
-                android:layout_width="match_parent"
+                    <!-- Start Date -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/start_date_layout"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif" />
-        </com.google.android.material.textfield.TextInputLayout>
+                        android:layout_weight="1"
+                        android:layout_marginEnd="8dp"
+                        android:hint="Start Date"
+                        app:startIconDrawable="@android:drawable/ic_menu_my_calendar"
+                        app:startIconTint="#3F51B5"
+                        app:boxStrokeColor="#3F51B5"
+                        app:hintTextColor="#3F51B5"
+                        app:boxStrokeWidth="1.5dp"
+                        app:shapeAppearance="@style/ShapeAppearance.MaterialComponents.MediumComponent"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-        <!-- End Date -->
-        <com.google.android.material.textfield.TextInputLayout
-                    android:id="@+id/end_date_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="End Date"
-                    android:layout_marginTop="16dp"
-                    app:startIconDrawable="@android:drawable/ic_menu_my_calendar"
-                    app:startIconTint="#3F51B5"
-                    app:boxStrokeColor="#3F51B5"
-                    app:hintTextColor="#3F51B5"
-                    app:boxStrokeWidth="1.5dp"
-                    app:shapeAppearance="@style/ShapeAppearance.MaterialComponents.MediumComponent"
-                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_start_date"
+                            android:focusable="false"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif" />
+                    </com.google.android.material.textfield.TextInputLayout>
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/et_end_date"
-                android:focusable="false"
-                android:layout_width="match_parent"
+                    <!-- End Date -->
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/end_date_layout"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:fontFamily="sans-serif" />
-        </com.google.android.material.textfield.TextInputLayout>
+                        android:layout_weight="1"
+                        android:layout_marginStart="8dp"
+                        android:hint="End Date"
+                        app:startIconDrawable="@android:drawable/ic_menu_my_calendar"
+                        app:startIconTint="#3F51B5"
+                        app:boxStrokeColor="#3F51B5"
+                        app:hintTextColor="#3F51B5"
+                        app:boxStrokeWidth="1.5dp"
+                        app:shapeAppearance="@style/ShapeAppearance.MaterialComponents.MediumComponent"
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-        <!-- Pickup Location -->
-        <com.google.android.material.textfield.TextInputLayout
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/et_end_date"
+                            android:focusable="false"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:fontFamily="sans-serif" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+
+                <!-- Pickup Location with Enhanced Visual Focus -->
+                <com.google.android.material.textfield.TextInputLayout
                     android:id="@+id/pickup_location_layout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Pickup Location"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="Pickup Location"
                     android:layout_marginTop="16dp"
                     app:startIconDrawable="@android:drawable/ic_menu_mylocation"
                     app:startIconTint="#3F51B5"
@@ -258,25 +363,28 @@
                     app:shapeAppearance="@style/ShapeAppearance.MaterialComponents.MediumComponent"
                     style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/et_pickup_location"
-                android:layout_width="match_parent"
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_pickup_location"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:fontFamily="sans-serif" />
-        </com.google.android.material.textfield.TextInputLayout>
+                </com.google.android.material.textfield.TextInputLayout>
 
-                <!-- Track Location Button (For Without Driver option) -->
+                <!-- Track Location Button with Enhanced Visual Style -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_track_location"
                     android:layout_width="match_parent"
                     android:layout_height="56dp"
                     android:text="TRACK LOCATION"
                     android:visibility="gone"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="20dp"
                     android:textStyle="bold"
                     android:textSize="16sp"
                     app:cornerRadius="28dp"
-                    app:elevation="4dp"
+                    app:elevation="6dp"
+                    app:icon="@drawable/ic_tracking"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp"
                     android:fontFamily="sans-serif-medium"
                     android:backgroundTint="#FF9800"
                     app:rippleColor="#FFD180"
@@ -284,31 +392,58 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Total Price Card -->
+        <!-- Total Price Card with Enhanced Visual Style -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="28dp"
             app:cardCornerRadius="24dp"
-            app:cardElevation="4dp"
+            app:cardElevation="8dp"
             app:strokeWidth="1.5dp"
             app:strokeColor="#3F51B5"
             app:cardBackgroundColor="#EEF1FD">
 
-        <TextView
-            android:id="@+id/tv_total_price"
+            <LinearLayout
                 android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Total Price: ₹0"
-            android:textStyle="bold"
-                android:textSize="22sp"
-                android:textColor="#3F51B5"
-                android:padding="16dp"
-                android:fontFamily="sans-serif-medium"
-                android:gravity="center" />
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:padding="20dp">
+
+<!--                <ImageView-->
+<!--                    android:layout_width="36dp"-->
+<!--                    android:layout_height="36dp"-->
+<!--                    android:src="@drawable/ic_car_new"-->
+<!--                    app:tint="#3F51B5"-->
+<!--                    android:layout_marginEnd="16dp"/>-->
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+<!--                    <TextView-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:text="Total Amount"-->
+<!--                        android:textColor="#757575"-->
+<!--                        android:textSize="14sp"-->
+<!--                        android:fontFamily="sans-serif-light"/>-->
+
+                    <TextView
+                        android:id="@+id/tv_total_price"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Total Price: ₹0"
+                        android:textStyle="italic"
+                        android:textSize="20sp"
+                        android:textColor="#3F51B5"
+                        android:fontFamily="sans-serif-medium" />
+                </LinearLayout>
+            </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Submit Button -->
+        <!-- Submit Button with Enhanced Visual Appeal -->
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_submit_booking"
             android:layout_width="match_parent"
@@ -319,6 +454,9 @@
             android:letterSpacing="0.05"
             app:cornerRadius="32dp"
             app:elevation="8dp"
+            app:icon="@drawable/ic_booking"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
             android:fontFamily="sans-serif-medium"
             android:backgroundTint="#3F51B5"
             app:rippleColor="#8C9EFF"

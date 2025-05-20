@@ -1,13 +1,7 @@
 package com.example.carrentaluser.fragments;
 
-import android.Manifest;
-import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
-import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -19,18 +13,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.carrentaluser.R;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapView;
@@ -47,8 +34,6 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.maps.android.SphericalUtil;
 
 import java.text.DecimalFormat;
@@ -63,9 +48,9 @@ import java.util.Locale;
 public class TrackingFragment extends Fragment implements OnMapReadyCallback {
 
     private static final String TAG = "TrackingFragment";
-    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
     private static final float DEFAULT_ZOOM = 15f;
     private static final double AVG_SPEED_KMH = 40.0;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
     // UI elements
     private MapView mapView;
@@ -79,13 +64,6 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
     private MaterialButton refreshButton;
     private SwipeRefreshLayout swipeRefreshLayout;
 
-    // Location variables
-    private FusedLocationProviderClient fusedLocationClient;
-    private LocationCallback locationCallback;
-    private LatLng userLocation;
-    private LatLng carLocation;
-    private Marker currentMarker;
-
     // Booking info
     private List<DocumentSnapshot> activeBookings;
     private DocumentSnapshot selectedBooking;
@@ -94,6 +72,12 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
     // Firebase
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
+
+    // Location variables - now just stored locations
+    private LatLng pickupLocation;
+    private LatLng branchLocation;
+    private Marker pickupMarker;
+    private Marker branchMarker;
 
     public TrackingFragment() {
         // Required empty public constructor
@@ -105,12 +89,6 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
         
         initializeViews(rootView);
         initializeFirebase();
-        
-        if (checkLocationPermission()) {
-            initializeLocationServices();
-        } else {
-            requestLocationPermission();
-        }
         
         initializeMap(savedInstanceState);
         loadActiveBookings();
@@ -146,8 +124,15 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
         }
 
         myLocationFab.setOnClickListener(v -> {
-            if (userLocation != null && googleMap != null) {
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLocation, DEFAULT_ZOOM));
+            if (pickupLocation != null && branchLocation != null && googleMap != null) {
+                // Zoom to show the entire route
+                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+                builder.include(pickupLocation);
+                builder.include(branchLocation);
+                LatLngBounds bounds = builder.build();
+                
+                int padding = 150;
+                googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
             }
         });
 
@@ -172,12 +157,6 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
         mAuth = FirebaseAuth.getInstance();
     }
 
-    private void initializeLocationServices() {
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity());
-        createLocationCallback();
-        startLocationUpdates();
-    }
-
     private void loadActiveBookings() {
         if (mAuth.getCurrentUser() == null) {
             showEmptyState("Please log in to track your bookings");
@@ -195,75 +174,74 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
         Date currentDate = Calendar.getInstance().getTime();
         Log.d(TAG, "Current date: " + sdf.format(currentDate));
 
-        // Query all bookings for this user to debug
+        // Query all bookings for this user
         db.collection("bookings")
             .whereEqualTo("user_id", userId)
             .get()
-            .addOnSuccessListener(allQuerySnapshot -> {
-                Log.d(TAG, "Total bookings found: " + allQuerySnapshot.size());
-                
-                // Log all bookings for debugging
-                for (DocumentSnapshot doc : allQuerySnapshot) {
-                    String status = doc.getString("status");
-                    String startDate = doc.getString("start_date");
-                    String carName = doc.getString("car_name");
-                    Log.d(TAG, "Booking found - Car: " + carName + ", Status: " + status + ", Date: " + startDate);
-                }
-                
-                // Now query specifically for confirmed bookings
-                db.collection("bookings")
-                    .whereEqualTo("user_id", userId)
-                    .get()
-                    .addOnSuccessListener(queryDocumentSnapshots -> {
-                        activeBookings = new ArrayList<>();
-                        List<String> bookingTitles = new ArrayList<>();
+            .addOnSuccessListener(queryDocumentSnapshots -> {
+                activeBookings = new ArrayList<>();
+                List<String> bookingTitles = new ArrayList<>();
 
-                        Log.d(TAG, "Processing bookings");
-                        for (DocumentSnapshot document : queryDocumentSnapshots) {
-                            String status = document.getString("status");
-                            // Check for both "Confirmed" and "confirmed" status (case insensitive)
-                            if (status != null && 
-                                (status.equalsIgnoreCase("Confirmed") || 
-                                 status.equalsIgnoreCase("confirm"))) {
+                Log.d(TAG, "Processing " + queryDocumentSnapshots.size() + " bookings");
+                
+                for (DocumentSnapshot document : queryDocumentSnapshots) {
+                    String status = document.getString("status");
+                    String startDateStr = document.getString("start_date");
+                    
+                    // Log each booking for debugging
+                    Log.d(TAG, "Booking found - Status: " + status + 
+                          ", Date: " + startDateStr + 
+                          ", Car: " + document.getString("car_name"));
+                    
+                    // Include bookings that are confirmed or in progress
+                    if (status != null && 
+                        (status.equalsIgnoreCase("Confirmed") || 
+                         status.equalsIgnoreCase("confirm") ||
+                         status.equalsIgnoreCase("In Progress"))) {
+                        
+                        try {
+                            if (startDateStr != null) {
+                                Date startDate = sdf.parse(startDateStr);
+                                // Include all confirmed bookings, including past ones
+                                // We'll just add them all to the list and let the user select
+                                activeBookings.add(document);
+                                String carName = document.getString("car_name");
+                                String pickupLocation = document.getString("pickup_location");
+                                String branchName = document.getString("branch_name");
                                 
-                                try {
-                                    String startDateStr = document.getString("start_date");
-                                    if (startDateStr != null) {
-                                        Date startDate = sdf.parse(startDateStr);
-                                        
-                                        // For debugging, log all confirmed bookings
-                                        Log.d(TAG, "Confirmed booking - Date: " + startDateStr + 
-                                              ", Car: " + document.getString("car_name") + 
-                                              ", Expired: " + (startDate != null && startDate.before(currentDate)));
-                                        
-                                        // Include all confirmed bookings regardless of date for now
-                                        activeBookings.add(document);
-                                        String carName = document.getString("car_name");
-                                        String date = startDateStr;
-                                        String pickupLocation = document.getString("pickup_location");
-                                        bookingTitles.add(String.format("%s - %s (%s)", carName, date, pickupLocation));
-                                    }
-                                } catch (ParseException e) {
-                                    Log.e(TAG, "Error parsing date: " + e.getMessage());
+                                // Include branch name in the booking listing if available
+                                String displayText;
+                                if (branchName != null && !branchName.isEmpty()) {
+                                    displayText = String.format("%s - %s (%s)", 
+                                        carName != null ? carName : "Unknown Car",
+                                        startDateStr,
+                                        branchName);
+                                } else {
+                                    displayText = String.format("%s - %s (%s)", 
+                                        carName != null ? carName : "Unknown Car",
+                                        startDateStr,
+                                        pickupLocation != null ? pickupLocation : "Unknown Location");
                                 }
+                                
+                                bookingTitles.add(displayText);
+                                Log.d(TAG, "Added booking to active list: " + displayText);
                             }
+                        } catch (ParseException e) {
+                            Log.e(TAG, "Error parsing date: " + e.getMessage());
                         }
+                    }
+                }
 
-                        if (activeBookings.isEmpty()) {
-                            showEmptyState("No confirmed bookings found");
-                            Log.d(TAG, "No active bookings after filtering");
-                        } else {
-                            Log.d(TAG, "Setting up spinner with " + activeBookings.size() + " bookings");
-                            setupBookingSpinner(bookingTitles);
-                        }
-                    })
-                    .addOnFailureListener(e -> {
-                        Log.e(TAG, "Error loading confirmed bookings: " + e.getMessage());
-                        showEmptyState("Error loading bookings: " + e.getMessage());
-                    });
+                if (activeBookings.isEmpty()) {
+                    showEmptyState("No active bookings found");
+                    Log.d(TAG, "No active bookings after filtering");
+                } else {
+                    Log.d(TAG, "Setting up spinner with " + activeBookings.size() + " bookings");
+                    setupBookingSpinner(bookingTitles);
+                }
             })
             .addOnFailureListener(e -> {
-                Log.e(TAG, "Error loading all bookings: " + e.getMessage());
+                Log.e(TAG, "Error loading bookings: " + e.getMessage());
                 showEmptyState("Error loading bookings: " + e.getMessage());
             });
     }
@@ -277,7 +255,7 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
         Log.d(TAG, "Empty state shown: " + message);
         
         // Hide the car location if we don't have bookings
-        carLocation = null;
+        branchLocation = null;
         if (googleMap != null) {
             googleMap.clear();
         }
@@ -314,107 +292,275 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
               selectedBooking.getString("car_name") + " - " + 
               selectedBooking.getString("start_date"));
 
-        // Try to get coordinates directly from booking
-        Double latitude = selectedBooking.getDouble("latitude");
-        Double longitude = selectedBooking.getDouble("longitude");
+        // First get the branch location
+        Double branchLat = null;
+        Double branchLng = null;
         
-        if (latitude == null || longitude == null || latitude == 0 || longitude == 0) {
-            Log.d(TAG, "Coordinates not found in booking, using fallback location");
-            // If no coordinates in booking, use a fallback location
-            latitude = 20.5937;
-            longitude = 78.9629; // Center of India as fallback
+        // Try branch location coordinates
+        if (selectedBooking.contains("branch_latitude") && selectedBooking.contains("branch_longitude")) {
+            branchLat = selectedBooking.getDouble("branch_latitude");
+            branchLng = selectedBooking.getDouble("branch_longitude");
+            Log.d(TAG, "Found branch coordinates: " + branchLat + ", " + branchLng);
+        } 
+        // If no branch coordinates found, check if there's a branch reference
+        else if (selectedBooking.contains("branch_id")) {
+            String branchId = selectedBooking.getString("branch_id");
+            if (branchId != null && !branchId.isEmpty()) {
+                // Fetch the branch document to get its location
+                fetchBranchLocation(branchId);
+                return; // Exit early, the fetchBranchLocation will continue the process
+            }
         }
+        
+        // Then get the pickup location  
+        Double pickupLat = null;
+        Double pickupLng = null;
+        
+        // Try pickup location coordinates
+        if (selectedBooking.contains("pickup_latitude") && selectedBooking.contains("pickup_longitude")) {
+            pickupLat = selectedBooking.getDouble("pickup_latitude");
+            pickupLng = selectedBooking.getDouble("pickup_longitude");
+            Log.d(TAG, "Found pickup coordinates: " + pickupLat + ", " + pickupLng);
+        }
+        
+        // If branch location is still not available, use fallback
+        if (branchLat == null || branchLng == null || branchLat == 0 || branchLng == 0) {
+            Log.d(TAG, "No branch coordinates found, using fallback location");
+            branchLat = 20.5937;
+            branchLng = 78.9629; // Center of India as fallback
+            
+            Toast.makeText(requireContext(), 
+                "Branch location data unavailable for this booking", 
+                Toast.LENGTH_SHORT).show();
+        }
+        
+        // If pickup location is not available, use fallback or branch location
+        if (pickupLat == null || pickupLng == null || pickupLat == 0 || pickupLng == 0) {
+            Log.d(TAG, "No pickup coordinates found, using fallback location");
+            
+            // Try to get pickup location from address using geocoding
+            String pickupAddress = selectedBooking.getString("pickup_location");
+            if (pickupAddress != null && !pickupAddress.isEmpty()) {
+                geocodePickupAddress(pickupAddress, new LatLng(branchLat, branchLng));
+                return; // Exit early, continue after geocoding completes
+            } else {
+                // If no pickup address either, use location near branch
+                // Use a slight offset from branch location for demonstration
+                pickupLat = branchLat + 0.02;
+                pickupLng = branchLng + 0.02;
+                Toast.makeText(requireContext(), 
+                    "Pickup location data unavailable for this booking", 
+                    Toast.LENGTH_SHORT).show();
+            }
+        }
+        
+        branchLocation = new LatLng(branchLat, branchLng);
+        pickupLocation = new LatLng(pickupLat, pickupLng);
         
         String carName = selectedBooking.getString("car_name");
         String startDate = selectedBooking.getString("start_date");
-        String pickupLocation = selectedBooking.getString("pickup_location");
+        String pickupLocationName = selectedBooking.getString("pickup_location");
+        String branchName = selectedBooking.getString("branch_name");
 
         // Log the location data
-        Log.d(TAG, "Car location: " + latitude + ", " + longitude);
+        Log.d(TAG, "Branch location: " + branchLat + ", " + branchLng);
+        Log.d(TAG, "Pickup location: " + pickupLat + ", " + pickupLng);
         
-        carLocation = new LatLng(latitude, longitude);
-        
-        // Update marker
-        if (currentMarker != null) {
-            currentMarker.remove();
-        }
-        
-        // Create a detailed snippet
-        String snippet = "Pickup: " + (pickupLocation != null ? pickupLocation : "Unknown");
-        if (startDate != null) {
-            snippet += "\nDate: " + startDate;
-        }
-        
-        currentMarker = googleMap.addMarker(new MarkerOptions()
-            .position(carLocation)
-            .title(carName != null ? carName : "Selected Car")
-            .snippet(snippet)
-            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)));
-
-        if (currentMarker != null) {
-            currentMarker.showInfoWindow();
-        }
-
-        // Update camera to show both user and car
-        if (userLocation != null) {
-            showRouteOnMap();
-        } else {
-            googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(carLocation, DEFAULT_ZOOM));
-        }
+        // Update map with both markers
+        updateMapWithLocations(carName, startDate, pickupLocationName, branchName);
     }
-
-    private void showRouteOnMap() {
-        if (userLocation == null || carLocation == null) {
-            Log.d(TAG, "Cannot show route: userLocation or carLocation is null");
+    
+    private void geocodePickupAddress(String address, LatLng nearbyLocation) {
+        Thread geocodeThread = new Thread(() -> {
+            try {
+                android.location.Geocoder geocoder = new android.location.Geocoder(requireContext(), java.util.Locale.getDefault());
+                List<android.location.Address> addresses = geocoder.getFromLocationName(address, 1);
+                
+                requireActivity().runOnUiThread(() -> {
+                    if (addresses != null && !addresses.isEmpty()) {
+                        android.location.Address location = addresses.get(0);
+                        Double pickupLat = location.getLatitude();
+                        Double pickupLng = location.getLongitude();
+                        
+                        pickupLocation = new LatLng(pickupLat, pickupLng);
+                        Log.d(TAG, "Geocoded pickup location: " + pickupLat + ", " + pickupLng);
+                        
+                        // Continue with the map update
+                        String carName = selectedBooking.getString("car_name");
+                        String startDate = selectedBooking.getString("start_date");
+                        String pickupLocationName = selectedBooking.getString("pickup_location");
+                        String branchName = selectedBooking.getString("branch_name");
+                        
+                        updateMapWithLocations(carName, startDate, pickupLocationName, branchName);
+                    } else {
+                        // Use location near branch as fallback
+                        Double pickupLat = nearbyLocation.latitude + 0.02;
+                        Double pickupLng = nearbyLocation.longitude + 0.02;
+                        pickupLocation = new LatLng(pickupLat, pickupLng);
+                        
+                        Toast.makeText(requireContext(), 
+                            "Could not find coordinates for pickup address", 
+                            Toast.LENGTH_SHORT).show();
+                            
+                        // Continue with the map update
+                        String carName = selectedBooking.getString("car_name");
+                        String startDate = selectedBooking.getString("start_date");
+                        String pickupLocationName = selectedBooking.getString("pickup_location");
+                        String branchName = selectedBooking.getString("branch_name");
+                        
+                        updateMapWithLocations(carName, startDate, pickupLocationName, branchName);
+                    }
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Error geocoding address: " + e.getMessage());
+                requireActivity().runOnUiThread(() -> {
+                    // Use location near branch as fallback
+                    Double pickupLat = nearbyLocation.latitude + 0.02;
+                    Double pickupLng = nearbyLocation.longitude + 0.02;
+                    pickupLocation = new LatLng(pickupLat, pickupLng);
+                    
+                    Toast.makeText(requireContext(), 
+                        "Error finding coordinates for pickup address", 
+                        Toast.LENGTH_SHORT).show();
+                        
+                    // Continue with the map update
+                    String carName = selectedBooking.getString("car_name");
+                    String startDate = selectedBooking.getString("start_date");
+                    String pickupLocationName = selectedBooking.getString("pickup_location");
+                    String branchName = selectedBooking.getString("branch_name");
+                    
+                    updateMapWithLocations(carName, startDate, pickupLocationName, branchName);
+                });
+            }
+        });
+        
+        geocodeThread.start();
+    }
+    
+    private void updateMapWithLocations(String carName, String startDate, String pickupLocationName, String branchName) {
+        if (googleMap == null || branchLocation == null || pickupLocation == null) {
+            Log.d(TAG, "Cannot update map: missing map or locations");
             return;
         }
-
-        // Clear previous polylines
+        
+        // Clear previous markers
         googleMap.clear();
         
-        // Re-add the car marker
-        String carName = selectedBooking.getString("car_name");
-        String startDate = selectedBooking.getString("start_date");
-        String pickupLocation = selectedBooking.getString("pickup_location");
-        
-        // Create a detailed snippet
-        String snippet = "Pickup: " + (pickupLocation != null ? pickupLocation : "Unknown");
+        // Add branch marker
+        String branchSnippet = "Branch Location";
         if (startDate != null) {
-            snippet += "\nDate: " + startDate;
+            branchSnippet += "\nDate: " + startDate;
         }
         
-        currentMarker = googleMap.addMarker(new MarkerOptions()
-            .position(carLocation)
-            .title(carName != null ? carName : "Selected Car")
-            .snippet(snippet)
+        pickupMarker = googleMap.addMarker(new MarkerOptions()
+            .position(pickupLocation)
+            .title("Pickup Location")
+            .snippet(pickupLocationName != null ? pickupLocationName : "Selected Pickup")
+            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+            
+        // Add pickup marker
+        pickupMarker = googleMap.addMarker(new MarkerOptions()
+            .position(branchLocation)
+            .title(branchName != null ? branchName : "Branch Location")
+            .snippet(branchSnippet)
             .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)));
-
-        if (currentMarker != null) {
-            currentMarker.showInfoWindow();
+            
+        if (pickupMarker != null) {
+            pickupMarker.showInfoWindow();
         }
-
-        // Draw route line
+        
+        // Draw route between pickup and branch
         googleMap.addPolyline(new PolylineOptions()
-            .add(userLocation, carLocation)
-            .width(5)
-            .color(Color.BLUE));
-
-        // Update distance and time
+            .add(pickupLocation, branchLocation)
+            .width(8)
+            .color(Color.rgb(0, 102, 255)));
+            
+        // Calculate and update distance and time
         calculateDistanceAndTime();
-
-        // Show both points
+        
+        // Zoom to show both points
         LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        builder.include(userLocation);
-        builder.include(carLocation);
+        builder.include(pickupLocation);
+        builder.include(branchLocation);
         LatLngBounds bounds = builder.build();
-
-        int padding = 100;
+        
+        int padding = 150;
         googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
     }
 
+    // New method to fetch branch location data
+    private void fetchBranchLocation(String branchId) {
+        Log.d(TAG, "Fetching branch location for ID: " + branchId);
+        
+        db.collection("branches")
+            .document(branchId)
+            .get()
+            .addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    Double branchLat = documentSnapshot.getDouble("latitude");
+                    Double branchLng = documentSnapshot.getDouble("longitude");
+                    String branchName = documentSnapshot.getString("name");
+                    
+                    Log.d(TAG, "Branch found: " + branchName + " at " + branchLat + ", " + branchLng);
+                    
+                    if (branchLat != null && branchLng != null && branchLat != 0 && branchLng != 0) {
+                        // Update branch location
+                        branchLocation = new LatLng(branchLat, branchLng);
+                        
+                        // Now try to get pickup location
+                        Double pickupLat = null;
+                        Double pickupLng = null;
+                        
+                        if (selectedBooking.contains("pickup_latitude") && selectedBooking.contains("pickup_longitude")) {
+                            pickupLat = selectedBooking.getDouble("pickup_latitude");
+                            pickupLng = selectedBooking.getDouble("pickup_longitude");
+                        }
+                        
+                        if (pickupLat != null && pickupLng != null && pickupLat != 0 && pickupLng != 0) {
+                            pickupLocation = new LatLng(pickupLat, pickupLng);
+                        } else {
+                            // Try geocoding the pickup address
+                            String pickupAddress = selectedBooking.getString("pickup_location");
+                            if (pickupAddress != null && !pickupAddress.isEmpty()) {
+                                geocodePickupAddress(pickupAddress, new LatLng(branchLat, branchLng));
+                                return; // Exit and continue after geocoding
+                            } else {
+                                // Use location near branch as fallback
+                                pickupLocation = new LatLng(branchLat + 0.02, branchLng + 0.02);
+                            }
+                        }
+                        
+                        // Get other booking details
+                        String carName = selectedBooking.getString("car_name");
+                        String startDate = selectedBooking.getString("start_date");
+                        String pickupLocationName = selectedBooking.getString("pickup_location");
+                        
+                        // Update the map
+                        updateMapWithLocations(carName, startDate, pickupLocationName, branchName);
+                    } else {
+                        Log.e(TAG, "Branch document doesn't contain valid coordinates");
+                        Toast.makeText(requireContext(), 
+                            "Branch location data is missing", 
+                            Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Log.e(TAG, "Branch document not found");
+                    Toast.makeText(requireContext(), 
+                        "Branch information not found", 
+                        Toast.LENGTH_SHORT).show();
+                }
+            })
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "Error fetching branch: " + e.getMessage());
+                Toast.makeText(requireContext(), 
+                    "Error loading branch location", 
+                    Toast.LENGTH_SHORT).show();
+            });
+    }
+
     private void calculateDistanceAndTime() {
-        if (userLocation != null && carLocation != null) {
-            double distanceInMeters = SphericalUtil.computeDistanceBetween(userLocation, carLocation);
+        if (pickupLocation != null && branchLocation != null) {
+            double distanceInMeters = SphericalUtil.computeDistanceBetween(pickupLocation, branchLocation);
             double distanceInKm = distanceInMeters / 1000;
             
             DecimalFormat df = new DecimalFormat("0.0");
@@ -436,52 +582,8 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
             
             timeValueTextView.setText(formattedTime);
             
-            Log.d(TAG, "Distance: " + formattedDistance + " km, ETA: " + formattedTime);
+            Log.d(TAG, "Distance between pickup and branch: " + formattedDistance + " km, ETA: " + formattedTime);
         }
-    }
-
-    private void createLocationCallback() {
-        locationCallback = new LocationCallback() {
-            @Override
-            public void onLocationResult(@NonNull LocationResult locationResult) {
-                if (locationResult.getLastLocation() != null) {
-                    Location location = locationResult.getLastLocation();
-                    userLocation = new LatLng(location.getLatitude(), location.getLongitude());
-                    Log.d(TAG, "User location updated: " + userLocation.latitude + ", " + userLocation.longitude);
-                    
-                    if (carLocation != null) {
-                        showRouteOnMap();
-                    }
-                }
-            }
-        };
-    }
-
-    private void startLocationUpdates() {
-        if (!checkLocationPermission()) return;
-
-        LocationRequest locationRequest = LocationRequest.create()
-            .setInterval(10000)
-            .setFastestInterval(5000)
-            .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-
-        try {
-            fusedLocationClient.requestLocationUpdates(locationRequest,
-                locationCallback, Looper.getMainLooper());
-            Log.d(TAG, "Location updates started");
-        } catch (SecurityException e) {
-            Log.e(TAG, "Error starting location updates: " + e.getMessage());
-        }
-    }
-
-    private boolean checkLocationPermission() {
-        return ContextCompat.checkSelfPermission(requireContext(),
-            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-    }
-
-    private void requestLocationPermission() {
-        requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
-            LOCATION_PERMISSION_REQUEST_CODE);
     }
 
     private void initializeMap(Bundle savedInstanceState) {
@@ -501,10 +603,9 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
         uiSettings.setMyLocationButtonEnabled(false);
         uiSettings.setCompassEnabled(true);
         
-        if (checkLocationPermission()) {
-            googleMap.setMyLocationEnabled(true);
-            startLocationUpdates();
-        }
+        // Rename the FAB to make it clearer
+        myLocationFab.setImageResource(android.R.drawable.ic_menu_mylocation);
+        myLocationFab.setContentDescription("Show Route");
         
         // If we already have a selected booking, update the map
         if (selectedBooking != null) {
@@ -513,30 +614,9 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                         @NonNull int[] grantResults) {
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                initializeLocationServices();
-                if (googleMap != null) {
-                    if (ActivityCompat.checkSelfPermission(requireContext(),
-                            Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-                        googleMap.setMyLocationEnabled(true);
-                    }
-                }
-            } else {
-                Toast.makeText(requireContext(), "Location permission denied", Toast.LENGTH_SHORT).show();
-            }
-        }
-    }
-
-    @Override
     public void onResume() {
         super.onResume();
         mapView.onResume();
-        if (checkLocationPermission()) {
-            startLocationUpdates();
-        }
         
         // Refresh bookings when fragment resumes
         loadActiveBookings();
@@ -544,9 +624,6 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
 
     @Override
     public void onPause() {
-        if (fusedLocationClient != null && locationCallback != null) {
-            fusedLocationClient.removeLocationUpdates(locationCallback);
-        }
         mapView.onPause();
         super.onPause();
     }

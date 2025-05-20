@@ -4,8 +4,11 @@ package com.example.carrentaluser;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.text.method.HideReturnsTransformationMethod;
+import android.text.method.PasswordTransformationMethod;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -19,7 +22,9 @@ public class RegisterActivity extends AppCompatActivity {
     EditText emailInput, passwordInput;
     Button registerBtn;
     TextView goToLogin;
+    ImageView togglePasswordVisibility;
     FirebaseAuth mAuth;
+    private boolean isPasswordVisible = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +37,23 @@ public class RegisterActivity extends AppCompatActivity {
         passwordInput = findViewById(R.id.passwordInput);
         registerBtn = findViewById(R.id.registerBtn);
         goToLogin = findViewById(R.id.goToLogin);
+        togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility);
+
+        // Set up password visibility toggle
+        togglePasswordVisibility.setOnClickListener(v -> {
+            isPasswordVisible = !isPasswordVisible;
+            if (isPasswordVisible) {
+                // Show password
+                passwordInput.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
+                togglePasswordVisibility.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
+            } else {
+                // Hide password
+                passwordInput.setTransformationMethod(PasswordTransformationMethod.getInstance());
+                togglePasswordVisibility.setImageResource(android.R.drawable.ic_menu_view);
+            }
+            // Maintain cursor position
+            passwordInput.setSelection(passwordInput.getText().length());
+        });
 
         registerBtn.setOnClickListener(v -> {
             String email = emailInput.getText().toString().trim();

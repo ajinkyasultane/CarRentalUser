@@ -19,6 +19,7 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
+import com.example.carrentaluser.ChangePasswordActivity;
 import com.example.carrentaluser.EditProfileActivity;
 import com.example.carrentaluser.ImageViewActivity;
 import com.example.carrentaluser.LoginActivity;
@@ -35,7 +36,7 @@ public class ProfileFragment extends Fragment {
     private ImageView profileImageView;
     private CardView profileImageContainer;
     private TextView greetingTextView, emailTextView, ageTextView, nameTextView;
-    private Button editProfileBtn, logoutBtn;
+    private Button editProfileBtn, changePasswordBtn, logoutBtn;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -83,6 +84,7 @@ public class ProfileFragment extends Fragment {
         ageTextView = view.findViewById(R.id.ageTextView);
         nameTextView = view.findViewById(R.id.nameTextView);
         editProfileBtn = view.findViewById(R.id.editProfileBtn);
+        changePasswordBtn = view.findViewById(R.id.changePasswordBtn);
         logoutBtn = view.findViewById(R.id.logoutBtn);
     }
     
@@ -98,6 +100,12 @@ public class ProfileFragment extends Fragment {
         // Set click listener for edit profile button
         editProfileBtn.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), EditProfileActivity.class);
+            startActivity(intent);
+        });
+        
+        // Set click listener for change password button
+        changePasswordBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), ChangePasswordActivity.class);
             startActivity(intent);
         });
 

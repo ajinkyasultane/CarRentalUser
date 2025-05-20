@@ -26,8 +26,8 @@
         app:layout_constraintEnd_toEndOf="parent">
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="377dp"
+            android:layout_height="match_parent"
             android:orientation="vertical"
             android:padding="12dp">
 
@@ -35,21 +35,21 @@
                 android:id="@+id/car_info_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center"
-                android:textSize="16sp"
-                android:textColor="#4A00E0"
-                android:textStyle="bold"
                 android:layout_marginBottom="8dp"
                 android:background="#F8F8F8"
-                android:visibility="visible"
-                android:text="Your upcoming rides" />
+                android:gravity="center"
+                android:text="Your upcoming rides"
+                android:textColor="#4A00E0"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:visibility="visible" />
 
             <Spinner
                 android:id="@+id/booking_spinner"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="48dp"
                 android:background="@android:drawable/btn_dropdown"
+                android:minHeight="48dp"
                 android:spinnerMode="dropdown" />
 
             <TextView

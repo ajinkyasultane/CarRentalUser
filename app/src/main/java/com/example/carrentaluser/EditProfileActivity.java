@@ -55,8 +55,10 @@ public class EditProfileActivity extends AppCompatActivity {
         // Set up action bar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setTitle("Edit Profile");
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setTitle("Edit Profile");
+        }
 
         // Check if coming from booking
         isFromBooking = getIntent().getBooleanExtra("from_booking", false);

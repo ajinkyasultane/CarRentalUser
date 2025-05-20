@@ -204,6 +204,19 @@
                     app:cornerRadius="12dp"
         android:layout_marginBottom="16dp" />
 
+    <!-- Change Password Button -->
+                <com.google.android.material.button.MaterialButton
+        android:id="@+id/changePasswordBtn"
+        android:layout_width="match_parent"
+                    android:layout_height="56dp"
+        android:text="Change Password"
+                    app:icon="@android:drawable/ic_lock_lock"
+                    app:iconGravity="textStart"
+        android:backgroundTint="#4A148C"
+                    android:textAllCaps="false"
+                    app:cornerRadius="12dp"
+        android:layout_marginBottom="16dp" />
+
     <!-- Logout Button -->
                 <com.google.android.material.button.MaterialButton
         android:id="@+id/logoutBtn"
