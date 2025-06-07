@@ -35,7 +35,7 @@ public class ProfileFragment extends Fragment {
     
     private ImageView profileImageView;
     private CardView profileImageContainer;
-    private TextView greetingTextView, emailTextView, ageTextView, nameTextView;
+    private TextView greetingTextView, emailTextView, ageTextView, nameTextView, mobileTextView;
     private Button editProfileBtn, changePasswordBtn, logoutBtn;
 
     private FirebaseAuth mAuth;
@@ -45,6 +45,7 @@ public class ProfileFragment extends Fragment {
     private String userEmail = "";
     private String userAge = "";
     private String userAddress = "";
+    private String userMobile = "";
     private String userImageUrl = null;
 
     public ProfileFragment() {
@@ -83,6 +84,7 @@ public class ProfileFragment extends Fragment {
         emailTextView = view.findViewById(R.id.emailTextView);
         ageTextView = view.findViewById(R.id.ageTextView);
         nameTextView = view.findViewById(R.id.nameTextView);
+        mobileTextView = view.findViewById(R.id.mobileTextView);
         editProfileBtn = view.findViewById(R.id.editProfileBtn);
         changePasswordBtn = view.findViewById(R.id.changePasswordBtn);
         logoutBtn = view.findViewById(R.id.logoutBtn);
@@ -137,6 +139,7 @@ public class ProfileFragment extends Fragment {
                         userEmail = documentSnapshot.getString("email");
                         userAge = documentSnapshot.getString("age");
                         userAddress = documentSnapshot.getString("address");
+                        userMobile = documentSnapshot.getString("mobile_number");
                         userImageUrl = documentSnapshot.getString("profile_image_url");
                         
                         Log.d(TAG, "User data loaded successfully");
@@ -144,6 +147,7 @@ public class ProfileFragment extends Fragment {
                         Log.d(TAG, "Email: " + userEmail);
                         Log.d(TAG, "Age: " + userAge);
                         Log.d(TAG, "Address: " + userAddress);
+                        Log.d(TAG, "Mobile: " + userMobile);
                         Log.d(TAG, "Image URL: " + userImageUrl);
                         
                         // Update UI with retrieved data
@@ -173,6 +177,14 @@ public class ProfileFragment extends Fragment {
         emailTextView.setText(userEmail);
         ageTextView.setText("Age: " + userAge);
         nameTextView.setText(userAddress);
+        
+        // Set mobile number if available
+        if (userMobile != null && !userMobile.isEmpty()) {
+            mobileTextView.setText(userMobile);
+            mobileTextView.setVisibility(View.VISIBLE);
+        } else {
+            mobileTextView.setVisibility(View.GONE);
+        }
         
         // Load profile image with enhanced error handling
         if (userImageUrl != null && !userImageUrl.isEmpty()) {

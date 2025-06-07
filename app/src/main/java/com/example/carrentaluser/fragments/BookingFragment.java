@@ -141,6 +141,7 @@ public class BookingFragment extends Fragment {
                     bookings.clear();
                     for (QueryDocumentSnapshot snapshot : queryDocumentSnapshots) {
                         Booking booking = snapshot.toObject(Booking.class);
+                        booking.setBooking_id(snapshot.getId());
                         bookings.add(booking);
                     }
 

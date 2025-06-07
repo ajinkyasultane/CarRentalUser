@@ -58,7 +58,7 @@ public class PaymentActivity extends AppCompatActivity implements PaymentResultL
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_payment);
-        
+
         // Initialize Razorpay
         Checkout.preload(getApplicationContext());
 

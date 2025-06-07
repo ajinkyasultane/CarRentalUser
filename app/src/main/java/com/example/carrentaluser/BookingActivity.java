@@ -114,13 +114,20 @@ public class BookingActivity extends AppCompatActivity {
         // Setup 50% payment button
         setupPayment50PercentButton();
         
+        // Set initial title based on selected driver option
+        if (radioWithDriver.isChecked()) {
+            setTitle("Book a Car with Driver");
+        } else {
+            setTitle("Find Nearest Branch");
+        }
+        
         // Apply initial visibility rules based on selected driver option
         if (radioWithDriver.isChecked()) {
             // With Driver flow initially - show all fields
             startDateLayout.setVisibility(View.VISIBLE);
             endDateLayout.setVisibility(View.VISIBLE);
             pickupLayout.setVisibility(View.VISIBLE);
-            btnTrackLocation.setVisibility(View.VISIBLE);
+            btnTrackLocation.setVisibility(View.GONE); // Hide track location button
             tvTotalPrice.setVisibility(View.VISIBLE);
             
             // Show 50% payment button and hide submit initially
@@ -131,19 +138,19 @@ public class BookingActivity extends AppCompatActivity {
                 "With driver service requires 50% advance payment and is only available within 50km of our branches", 
                 Toast.LENGTH_LONG).show();
         } else {
-            // Without Driver flow initially - simplified experience
-            startDateLayout.setVisibility(View.VISIBLE);  // Show start date
-            endDateLayout.setVisibility(View.VISIBLE);    // Show end date
+            // Without Driver flow initially - simplified to only branch and track location
+            startDateLayout.setVisibility(View.GONE);  // Hide dates
+            endDateLayout.setVisibility(View.GONE);    // Hide dates
             pickupLayout.setVisibility(View.GONE);     // Hide pickup location field
-            btnTrackLocation.setVisibility(View.GONE);
-            tvTotalPrice.setVisibility(View.VISIBLE);
+            btnTrackLocation.setVisibility(View.VISIBLE); // Show track location button
+            tvTotalPrice.setVisibility(View.GONE);     // Hide price
             
-            // Hide 50% payment button and show submit button
+            // Hide payment and submit buttons
             btnPayment50Percent.setVisibility(View.GONE);
-            btnSubmit.setVisibility(View.VISIBLE);
+            btnSubmit.setVisibility(View.GONE);
             
             Toast.makeText(BookingActivity.this, 
-                "Please meet at our nearest branch for pickup", 
+                "Select your nearest branch and track its location", 
                 Toast.LENGTH_LONG).show();
         }
         
@@ -225,6 +232,13 @@ public class BookingActivity extends AppCompatActivity {
         minDate.set(Calendar.MINUTE, 0);
         minDate.set(Calendar.SECOND, 0);
         minDate.set(Calendar.MILLISECOND, 0);
+        
+        // Set initial button text based on mode
+        if (radioWithoutDriver.isChecked()) {
+            btnTrackLocation.setText("Track Branch Location");
+        } else {
+            btnTrackLocation.setText("Track Location");
+        }
     }
 
     private void getCarDetails() {
@@ -456,7 +470,7 @@ public class BookingActivity extends AppCompatActivity {
                 startDateLayout.setVisibility(View.VISIBLE);
                 endDateLayout.setVisibility(View.VISIBLE);
                 pickupLayout.setVisibility(View.VISIBLE);
-                btnTrackLocation.setVisibility(View.VISIBLE);
+                btnTrackLocation.setVisibility(View.GONE); // Hide track location button
                 tvTotalPrice.setVisibility(View.VISIBLE);
                 
                 // Show 50% payment button
@@ -470,33 +484,45 @@ public class BookingActivity extends AppCompatActivity {
                     btnPayment50Percent.setText("Make 50% Advance Payment");
                 }
                 
+                // Update button text
+                btnTrackLocation.setText("Track Location");
+                
+                // Update activity title
+                setTitle("Book a Car with Driver");
+                
                 Toast.makeText(BookingActivity.this, 
                     "With driver service requires 50% advance payment and is only available within 50km of our branches", 
                     Toast.LENGTH_LONG).show();
             } else {
-                // Without Driver option selected
-                startDateLayout.setVisibility(View.VISIBLE); // Keep these visible for without driver too
-                endDateLayout.setVisibility(View.VISIBLE);
-                pickupLayout.setVisibility(View.GONE);
-                btnTrackLocation.setVisibility(View.GONE);
-                tvTotalPrice.setVisibility(View.VISIBLE);
+                // Without Driver option selected - simplified to only show branch and track location
+                startDateLayout.setVisibility(View.GONE);  // Hide dates
+                endDateLayout.setVisibility(View.GONE);    // Hide dates
+                pickupLayout.setVisibility(View.GONE);     // Hide pickup location field
+                btnTrackLocation.setVisibility(View.VISIBLE); // Show track location button
+                tvTotalPrice.setVisibility(View.GONE);     // Hide price
                 
-                // Hide 50% payment button for without driver option
+                // Hide payment and submit buttons
                 btnPayment50Percent.setVisibility(View.GONE);
+                btnSubmit.setVisibility(View.GONE);
                 
-                // Always show submit button for without driver
-                btnSubmit.setVisibility(View.VISIBLE);
+                // Update button text
+                btnTrackLocation.setText("Track Branch Location");
+                
+                // Update activity title
+                setTitle("Find Nearest Branch");
                 
                 Toast.makeText(BookingActivity.this, 
-                    "Please meet at our nearest branch for pickup", 
+                    "Select your nearest branch and track its location", 
                     Toast.LENGTH_LONG).show();
             }
             
             // Always update the branch dropdown visibility (existing logic)
             branchesDropdownLayout.setVisibility(View.VISIBLE);
             
-            // Trigger total price calculation whenever driver option changes
-            calculateTotalPrice();
+            // Only calculate price for with driver option
+            if (radioWithDriver.isChecked()) {
+                calculateTotalPrice();
+            }
         });
     }
     
@@ -523,7 +549,12 @@ public class BookingActivity extends AppCompatActivity {
             
             // Pass additional flags for clarity
             intent.putExtra("show_route", true);
-            intent.putExtra("from_no_driver_mode", true);
+            intent.putExtra("from_no_driver_mode", !radioWithDriver.isChecked());
+            
+            // If without driver mode, update button text to be clearer
+            if (!radioWithDriver.isChecked()) {
+                btnTrackLocation.setText("Track Branch Location");
+            }
             
             startActivity(intent);
         });
@@ -757,7 +788,6 @@ public class BookingActivity extends AppCompatActivity {
             // Validate inputs before proceeding to payment
             String startDate = etStartDate.getText().toString();
             String endDate = etEndDate.getText().toString();
-            String pickup = etPickupLocation.getText().toString().trim();
             String branch = branchesDropdown.getText().toString().trim();
 
             // Validate inputs
@@ -766,33 +796,37 @@ public class BookingActivity extends AppCompatActivity {
                 return;
             }
             
-            if (pickup.isEmpty()) {
-                Toast.makeText(this, "Please select a pickup location", Toast.LENGTH_SHORT).show();
-                return;
+            // For with driver option, validate pickup location
+            if (radioWithDriver.isChecked()) {
+                String pickup = etPickupLocation.getText().toString().trim();
+                if (pickup.isEmpty()) {
+                    Toast.makeText(this, "Please select a pickup location", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                // Check distance for 50km limit
+                if (selectedBranchLatitude != 0 && selectedBranchLongitude != 0 &&
+                    selectedLatitude != 0 && selectedLongitude != 0) {
+                    
+                    float[] results = new float[1];
+                    Location.distanceBetween(
+                        selectedLatitude, selectedLongitude,
+                        selectedBranchLatitude, selectedBranchLongitude,
+                        results
+                    );
+                    
+                    double distanceKm = results[0] / 1000.0;
+                    
+                    if (distanceKm > MAX_DISTANCE_KM) {
+                        showMaxDistanceExceededDialog();
+                        return;
+                    }
+                }
             }
             
             if (selectedBranchId.isEmpty()) {
                 Toast.makeText(this, "Please select a valid branch", Toast.LENGTH_SHORT).show();
                 return;
-            }
-            
-            // Check distance for 50km limit
-            if (selectedBranchLatitude != 0 && selectedBranchLongitude != 0 &&
-                selectedLatitude != 0 && selectedLongitude != 0) {
-                
-                float[] results = new float[1];
-                Location.distanceBetween(
-                    selectedLatitude, selectedLongitude,
-                    selectedBranchLatitude, selectedBranchLongitude,
-                    results
-                );
-                
-                double distanceKm = results[0] / 1000.0;
-                
-                if (distanceKm > MAX_DISTANCE_KM) {
-                    showMaxDistanceExceededDialog();
-                    return;
-                }
             }
             
             try {
@@ -869,7 +903,7 @@ public class BookingActivity extends AppCompatActivity {
                 return;
             }
             
-            // Check if advance payment is done for with driver option
+            // Check if advance payment is done for "with driver" option only
             if (!isAdvancePaymentDone) {
                 Toast.makeText(this, "Please make the 50% advance payment first", Toast.LENGTH_LONG).show();
                 return;
@@ -942,7 +976,7 @@ public class BookingActivity extends AppCompatActivity {
             booking.put("user_email", userEmail);
             booking.put("booking_date", sdf.format(new Date()));
             
-            // Add payment status if with driver
+            // Add payment status only for "with driver" option
             if (radioWithDriver.isChecked()) {
                 booking.put("advance_payment_done", isAdvancePaymentDone);
                 booking.put("advance_payment_amount", totalPrice / 2);

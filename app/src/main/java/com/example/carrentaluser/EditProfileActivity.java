@@ -33,7 +33,7 @@ public class EditProfileActivity extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 100;
 
     private ImageView profileImageView;
-    private EditText fullNameEditText, emailEditText, ageEditText, addressEditText;
+    private EditText fullNameEditText, emailEditText, ageEditText, addressEditText, mobileEditText;
     private TextView titleTextView, uploadPhotoText;
     private Button saveBtn;
     private Uri imageUri;
@@ -69,6 +69,7 @@ public class EditProfileActivity extends AppCompatActivity {
         emailEditText = findViewById(R.id.emailEditText);
         ageEditText = findViewById(R.id.ageEditText);
         addressEditText = findViewById(R.id.addressEditText);
+        mobileEditText = findViewById(R.id.mobileEditText);
         saveBtn = findViewById(R.id.saveBtn);
         titleTextView = findViewById(R.id.titleTextView);
         uploadPhotoText = findViewById(R.id.uploadPhotoText);
@@ -119,10 +120,12 @@ public class EditProfileActivity extends AppCompatActivity {
                     String age = documentSnapshot.getString("age");
                     String address = documentSnapshot.getString("address");
                     String profileImageUrl = documentSnapshot.getString("profile_image_url");
+                    String mobile = documentSnapshot.getString("mobile_number");
                     
                     if (fullName != null) fullNameEditText.setText(fullName);
                     if (age != null) ageEditText.setText(age);
                     if (address != null) addressEditText.setText(address);
+                    if (mobile != null) mobileEditText.setText(mobile);
                     
                     if (profileImageUrl != null && !profileImageUrl.isEmpty()) {
                         existingImageUrl = profileImageUrl;
@@ -148,6 +151,7 @@ public class EditProfileActivity extends AppCompatActivity {
         String fullName = fullNameEditText.getText().toString().trim();
         String age = ageEditText.getText().toString().trim();
         String address = addressEditText.getText().toString().trim();
+        String mobile = mobileEditText.getText().toString().trim();
         
         boolean isValid = true;
         
@@ -163,6 +167,17 @@ public class EditProfileActivity extends AppCompatActivity {
         
         if (address.isEmpty()) {
             addressEditText.setError("Required");
+            isValid = false;
+        }
+
+        if (mobile.isEmpty()) {
+            mobileEditText.setError("Required");
+            isValid = false;
+        } else if (mobile.length() < 10 || mobile.length() > 15) {
+            mobileEditText.setError("Please enter a valid mobile number (10-15 digits)");
+            isValid = false;
+        } else if (!mobile.matches("[0-9+\\-\\s]+")) {
+            mobileEditText.setError("Mobile number should contain only digits, +, - or spaces");
             isValid = false;
         }
         
@@ -229,12 +244,14 @@ public class EditProfileActivity extends AppCompatActivity {
         String age = ageEditText.getText().toString().trim();
         String address = addressEditText.getText().toString().trim();
         String email = emailEditText.getText().toString().trim();
+        String mobile = mobileEditText.getText().toString().trim();
 
         HashMap<String, Object> userMap = new HashMap<>();
         userMap.put("full_name", fullName);
         userMap.put("email", email);
         userMap.put("age", age);
         userMap.put("address", address);
+        userMap.put("mobile_number", mobile);
         if (imageUrl != null) userMap.put("profile_image_url", imageUrl);
 
         db.collection("users").document(userId).set(userMap)
@@ -297,6 +314,7 @@ public class EditProfileActivity extends AppCompatActivity {
         if (!fullNameEditText.getText().toString().isEmpty() || 
             !ageEditText.getText().toString().isEmpty() || 
             !addressEditText.getText().toString().isEmpty() ||
+            !mobileEditText.getText().toString().isEmpty() ||
             imageUri != null) {
             
             new AlertDialog.Builder(this)
