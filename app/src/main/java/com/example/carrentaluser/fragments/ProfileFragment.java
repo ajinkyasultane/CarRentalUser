@@ -180,7 +180,7 @@ public class ProfileFragment extends Fragment {
         
         // Set mobile number if available
         if (userMobile != null && !userMobile.isEmpty()) {
-            mobileTextView.setText(userMobile);
+            mobileTextView.setText("Mobile: " + userMobile);
             mobileTextView.setVisibility(View.VISIBLE);
         } else {
             mobileTextView.setVisibility(View.GONE);

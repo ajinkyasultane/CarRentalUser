@@ -33,7 +33,6 @@
                 android:id="@+id/search_layout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Search bookings"
                 app:startIconDrawable="@android:drawable/ic_menu_search"
                 app:endIconMode="clear_text"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
@@ -41,6 +40,8 @@
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/search_edit_text"
                     android:layout_width="match_parent"
+                    android:hint="Search bookings"
+                    android:drawableStart="@android:drawable/ic_menu_search"
                     android:layout_height="match_parent"
                     android:inputType="text"
                     android:imeOptions="actionSearch" />

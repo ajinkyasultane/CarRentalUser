@@ -138,7 +138,7 @@
                         android:id="@+id/mobileTextView"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="+91 9876543210"
+                        android:text="Mobile: +91 9876543210"
                         android:textSize="16sp"
                         android:textColor="#757575" />
                 </LinearLayout>

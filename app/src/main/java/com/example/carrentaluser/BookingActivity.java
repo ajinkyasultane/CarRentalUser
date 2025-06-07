@@ -428,10 +428,12 @@ public class BookingActivity extends AppCompatActivity {
                     String fullName = documentSnapshot.getString("full_name");
                     String age = documentSnapshot.getString("age");
                     String address = documentSnapshot.getString("address");
+                    String mobile = documentSnapshot.getString("mobile_number");
                     
                     isProfileComplete = fullName != null && !fullName.isEmpty() 
                         && age != null && !age.isEmpty() 
-                        && address != null && !address.isEmpty();
+                        && address != null && !address.isEmpty()
+                    && mobile != null && !mobile.isEmpty();
                     
                     if (!isProfileComplete) {
                         showProfileIncompleteDialog();
@@ -490,9 +492,9 @@ public class BookingActivity extends AppCompatActivity {
                 // Update activity title
                 setTitle("Book a Car with Driver");
                 
-                Toast.makeText(BookingActivity.this, 
+                    Toast.makeText(BookingActivity.this, 
                     "With driver service requires 50% advance payment and is only available within 50km of our branches", 
-                    Toast.LENGTH_LONG).show();
+                        Toast.LENGTH_LONG).show();
             } else {
                 // Without Driver option selected - simplified to only show branch and track location
                 startDateLayout.setVisibility(View.GONE);  // Hide dates
@@ -899,8 +901,8 @@ public class BookingActivity extends AppCompatActivity {
         
         if (radioWithDriver.isChecked()) {
             if (pickup.isEmpty()) {
-                Toast.makeText(this, "Please select a pickup location", Toast.LENGTH_SHORT).show();
-                return;
+            Toast.makeText(this, "Please select a pickup location", Toast.LENGTH_SHORT).show();
+            return;
             }
             
             // Check if advance payment is done for "with driver" option only

@@ -1,30 +1,27 @@
 package com.example.carrentaluser;
 
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.text.method.HideReturnsTransformationMethod;
-import android.text.method.PasswordTransformationMethod;
+import android.util.Log;
+import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.carrentaluser.R;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    EditText emailInput, passwordInput;
-    Button registerBtn;
-    TextView goToLogin;
-    ImageView togglePasswordVisibility;
-    FirebaseAuth mAuth;
-    private boolean isPasswordVisible = false;
+    private static final String TAG = "RegisterActivity";
+    
+    private TextInputEditText emailInput, passwordInput;
+    private Button registerBtn;
+    private TextView goToLogin;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,51 +30,70 @@ public class RegisterActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
+        // Initialize UI elements
         emailInput = findViewById(R.id.emailInput);
         passwordInput = findViewById(R.id.passwordInput);
         registerBtn = findViewById(R.id.registerBtn);
         goToLogin = findViewById(R.id.goToLogin);
-        togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility);
 
-        // Set up password visibility toggle
-        togglePasswordVisibility.setOnClickListener(v -> {
-            isPasswordVisible = !isPasswordVisible;
-            if (isPasswordVisible) {
-                // Show password
-                passwordInput.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
-                togglePasswordVisibility.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
-            } else {
-                // Hide password
-                passwordInput.setTransformationMethod(PasswordTransformationMethod.getInstance());
-                togglePasswordVisibility.setImageResource(android.R.drawable.ic_menu_view);
-            }
-            // Maintain cursor position
-            passwordInput.setSelection(passwordInput.getText().length());
-        });
-
+        // Set up register button click listener
         registerBtn.setOnClickListener(v -> {
-            String email = emailInput.getText().toString().trim();
-            String password = passwordInput.getText().toString().trim();
-
-            if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
-                Toast.makeText(this, "All fields are required", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            mAuth.createUserWithEmailAndPassword(email, password)
-                    .addOnSuccessListener(authResult -> {
-                        Toast.makeText(this, "Registered successfully", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(this, LoginActivity.class));
-                        finish();
-                    })
-                    .addOnFailureListener(e ->
-                            Toast.makeText(this, "Registration failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                    );
+            registerUser();
         });
 
+        // Set up login link click listener
         goToLogin.setOnClickListener(v -> {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         });
+    }
+    
+    private void registerUser() {
+        String email = emailInput.getText().toString().trim();
+        String password = passwordInput.getText().toString().trim();
+        
+        // Validate inputs
+        if (TextUtils.isEmpty(email)) {
+            emailInput.setError("Email is required");
+            emailInput.requestFocus();
+            return;
+        }
+        
+        if (TextUtils.isEmpty(password)) {
+            passwordInput.setError("Password is required");
+            passwordInput.requestFocus();
+            return;
+        }
+        
+        if (password.length() < 6) {
+            passwordInput.setError("Password must be at least 6 characters");
+            passwordInput.requestFocus();
+            return;
+        }
+        
+        // Show progress
+        registerBtn.setEnabled(false);
+        registerBtn.setText("Creating account...");
+        
+        // Create account with Firebase
+        mAuth.createUserWithEmailAndPassword(email, password)
+                .addOnSuccessListener(authResult -> {
+                    // Show success message
+                    Toast.makeText(this, "Registration successful", Toast.LENGTH_SHORT).show();
+                    
+                    // Navigate to login
+                    startActivity(new Intent(this, LoginActivity.class));
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    // Re-enable button
+                    registerBtn.setEnabled(true);
+                    registerBtn.setText("Create Account");
+                    
+                    // Show error message
+                    Log.e(TAG, "Registration failed", e);
+                    Toast.makeText(this, "Registration failed: " + e.getMessage(), 
+                            Toast.LENGTH_SHORT).show();
+                });
     }
 }

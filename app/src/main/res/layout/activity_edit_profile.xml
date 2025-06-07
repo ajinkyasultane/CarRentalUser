@@ -71,13 +71,12 @@
                 android:layout_marginBottom="16dp"
                 app:startIconDrawable="@android:drawable/ic_menu_edit"
                 app:boxStrokeColor="#3F51B5"
-                app:helperText="*Required"
-                app:helperTextTextColor="#D32F2F"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
     <EditText
         android:id="@+id/fullNameEditText"
         android:hint="Full Name"
+        android:drawableStart="@android:drawable/ic_dialog_email"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
                     android:inputType="textPersonName" />
@@ -95,6 +94,7 @@
     <EditText
         android:id="@+id/emailEditText"
         android:hint="Email"
+        android:drawableStart="@android:drawable/ic_dialog_email"
         android:enabled="false"
         android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -108,13 +108,12 @@
                 android:layout_marginBottom="16dp"
                 app:startIconDrawable="@android:drawable/ic_menu_call"
                 app:boxStrokeColor="#3F51B5"
-                app:helperText="*Required"
-                app:helperTextTextColor="#D32F2F"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
     <EditText
         android:id="@+id/mobileEditText"
         android:hint="Mobile Number"
+        android:drawableStart="@android:drawable/ic_menu_call"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="phone" />
@@ -127,13 +126,12 @@
                 android:layout_marginBottom="16dp"
                 app:startIconDrawable="@android:drawable/ic_menu_recent_history"
                 app:boxStrokeColor="#3F51B5"
-                app:helperText="*Required"
-                app:helperTextTextColor="#D32F2F"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
     <EditText
         android:id="@+id/ageEditText"
         android:hint="Age"
+        android:drawableStart="@android:drawable/ic_menu_recent_history"
         android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="number" />
@@ -146,13 +144,12 @@
                 android:layout_marginBottom="32dp"
                 app:startIconDrawable="@android:drawable/ic_menu_mylocation"
                 app:boxStrokeColor="#3F51B5"
-                app:helperText="*Required"
-                app:helperTextTextColor="#D32F2F"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
     <EditText
         android:id="@+id/addressEditText"
         android:hint="Address"
+        android:drawableStart="@android:drawable/ic_menu_mylocation"
         android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:inputType="textPostalAddress"

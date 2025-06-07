@@ -4,28 +4,29 @@ package com.example.carrentaluser;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.text.method.HideReturnsTransformationMethod;
-import android.text.method.PasswordTransformationMethod;
+import android.util.Log;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.auth.FirebaseAuth;
+
 import com.example.carrentaluser.R;
 import com.example.carrentaluser.utils.TokenManager;
-import com.google.firebase.auth.FirebaseAuth;
 
 public class LoginActivity extends AppCompatActivity {
 
-    EditText emailInput, passwordInput;
-    Button loginBtn;
-    TextView goToRegister, forgotPasswordLink;
-    ImageView togglePasswordVisibility;
-    FirebaseAuth mAuth;
-    private boolean isPasswordVisible = false;
+    private static final String TAG = "LoginActivity";
+    
+    private TextInputEditText emailInput, passwordInput;
+    private Button loginBtn;
+    private TextView goToRegister, forgotPasswordLink;
+    private FirebaseAuth mAuth;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,59 +35,75 @@ public class LoginActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
+        // Initialize UI elements
         emailInput = findViewById(R.id.emailInput);
         passwordInput = findViewById(R.id.passwordInput);
         loginBtn = findViewById(R.id.loginBtn);
         goToRegister = findViewById(R.id.goToRegister);
         forgotPasswordLink = findViewById(R.id.forgotPasswordLink);
-        togglePasswordVisibility = findViewById(R.id.togglePasswordVisibility);
 
-        // Set up password visibility toggle
-        togglePasswordVisibility.setOnClickListener(v -> {
-            isPasswordVisible = !isPasswordVisible;
-            if (isPasswordVisible) {
-                // Show password
-                passwordInput.setTransformationMethod(HideReturnsTransformationMethod.getInstance());
-                togglePasswordVisibility.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
-            } else {
-                // Hide password
-                passwordInput.setTransformationMethod(PasswordTransformationMethod.getInstance());
-                togglePasswordVisibility.setImageResource(android.R.drawable.ic_menu_view);
-            }
-            // Maintain cursor position
-            passwordInput.setSelection(passwordInput.getText().length());
-        });
-
+        // Set up login button click listener
         loginBtn.setOnClickListener(v -> {
-            String email = emailInput.getText().toString().trim();
-            String password = passwordInput.getText().toString().trim();
-
-            if (TextUtils.isEmpty(email) || TextUtils.isEmpty(password)) {
-                Toast.makeText(this, "Please enter all fields", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            mAuth.signInWithEmailAndPassword(email, password)
-                    .addOnSuccessListener(authResult -> {
-
-                        TokenManager.uploadToken();
-
-                        Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show();
-                        startActivity(new Intent(this, MainActivity.class));
-                        finish();
-                    })
-                    .addOnFailureListener(e ->
-                            Toast.makeText(this, "Login failed: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-                    );
+            loginUser();
         });
 
+        // Set up register link click listener
         goToRegister.setOnClickListener(v -> {
             startActivity(new Intent(this, RegisterActivity.class));
             finish();
         });
         
+        // Set up forgot password link click listener
         forgotPasswordLink.setOnClickListener(v -> {
             startActivity(new Intent(this, ForgotPasswordActivity.class));
         });
+    }
+    
+    private void loginUser() {
+        String email = emailInput.getText().toString().trim();
+        String password = passwordInput.getText().toString().trim();
+        
+        // Validate inputs
+        if (TextUtils.isEmpty(email)) {
+            emailInput.setError("Email is required");
+            emailInput.requestFocus();
+            return;
+        }
+        
+        if (TextUtils.isEmpty(password)) {
+            passwordInput.setError("Password is required");
+            passwordInput.requestFocus();
+            return;
+        }
+        
+        // Show progress
+        loginBtn.setEnabled(false);
+        loginBtn.setText("Signing in...");
+        
+        // Authenticate with Firebase
+        mAuth.signInWithEmailAndPassword(email, password)
+                .addOnSuccessListener(authResult -> {
+                    // Upload FCM token if needed
+                    try {
+                        TokenManager.uploadToken();
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error uploading token: " + e.getMessage());
+                    }
+
+                    // Show success message
+                    Toast.makeText(this, "Login successful", Toast.LENGTH_SHORT).show();
+                    
+                    // Navigate to main activity
+                    startActivity(new Intent(this, MainActivity.class));
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    // Re-enable button
+                    loginBtn.setEnabled(true);
+                    loginBtn.setText("Sign In");
+                    
+                    // Show error message
+                    Toast.makeText(this, "Login failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
     }
 }
