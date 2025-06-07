@@ -1,109 +1,341 @@
-/*
 package com.example.carrentaluser;
 
+import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.carrentaluser.models.BookingModel;
-import com.example.carrentaluser.models.Car;
+import com.bumptech.glide.Glide;
+import com.google.android.material.textfield.TextInputEditText;
+import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.razorpay.Checkout;
+import com.razorpay.PaymentData;
+import com.razorpay.PaymentResultListener;
 
-import java.text.ParseException;
+import org.json.JSONObject;
+
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
 import java.util.UUID;
 
-public class PaymentActivity extends AppCompatActivity {
+import android.widget.ImageView;
 
-    TextView summaryText, totalPriceText;
-    Button confirmPaymentButton;
+public class PaymentActivity extends AppCompatActivity implements PaymentResultListener {
 
-    String carId, startDateStr, endDateStr, pickupLocation;
-    Car selectedCar;
+    private static final String TAG = "PaymentActivity";
+    
+    // Razorpay API key - Replace with your actual key from Razorpay dashboard
+    private static final String RAZORPAY_API_KEY = "rzp_test_Jrr3S8Z52c8foR";
+
+    private TextView tvCarName, tvPaymentAmount, tvPaymentDescription;
+    private ImageView ivCarImage;
+    private Button btnConfirmPayment, btnChooseUpiApp;
+    private RadioGroup paymentMethodGroup;
+    private RadioButton radioUpi, radioCard;
+    private TextInputLayout upiIdLayout;
+    private TextInputEditText etUpiId;
+    
+    private boolean isAdvancePayment = false;
+    private int totalPrice = 0;
+    private String carName;
+    private String carImage;
+    private int amount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_payment);
+        
+        // Initialize Razorpay
+        Checkout.preload(getApplicationContext());
 
-        summaryText = findViewById(R.id.text_summary);
-        totalPriceText = findViewById(R.id.text_total_price);
-        confirmPaymentButton = findViewById(R.id.button_confirm_payment);
+        // Initialize views
+        tvCarName = findViewById(R.id.tv_car_name);
+        tvPaymentAmount = findViewById(R.id.tv_payment_amount);
+        tvPaymentDescription = findViewById(R.id.tv_payment_description);
+        ivCarImage = findViewById(R.id.iv_car_image);
+        btnConfirmPayment = findViewById(R.id.btn_confirm_payment);
+        paymentMethodGroup = findViewById(R.id.payment_method_group);
+        radioUpi = findViewById(R.id.radio_upi);
+        radioCard = findViewById(R.id.radio_card);
+        upiIdLayout = findViewById(R.id.upi_id_layout);
+        etUpiId = findViewById(R.id.et_upi_id);
+        btnChooseUpiApp = findViewById(R.id.btn_choose_upi_app);
 
-        // Get the data passed from BookingActivity
-        carId = getIntent().getStringExtra("carId");
-        startDateStr = getIntent().getStringExtra("startDate");
-        endDateStr = getIntent().getStringExtra("endDate");
-        pickupLocation = getIntent().getStringExtra("pickupLocation");
+        // Get intent data
+        carName = getIntent().getStringExtra("car_name");
+        carImage = getIntent().getStringExtra("car_image");
+        amount = getIntent().getIntExtra("amount", 0);
+        isAdvancePayment = getIntent().getBooleanExtra("is_advance_payment", false);
+        
+        if (isAdvancePayment) {
+            totalPrice = getIntent().getIntExtra("total_price", 0);
+        }
 
-        // Mock Car data (Replace this with real car data from Firebase or intent)
-        selectedCar = new Car(carId, "Swift Dzire", 1200, "https://example.com/swift.jpg");
-
-        summaryText.setText(
-                "Car: " + selectedCar.getName() + "\n" +
-                        "From: " + startDateStr + "\n" +
-                        "To: " + endDateStr + "\n" +
-                        "Pickup: " + pickupLocation
-        );
-
-        // Calculate total cost
-        int totalDays = calculateDays(startDateStr, endDateStr);
-        int totalAmount = selectedCar.getPricePerDay() * totalDays;
-        totalPriceText.setText("Total: ₹" + totalAmount);
-
-        confirmPaymentButton.setOnClickListener(v -> {
-            String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-            BookingModel booking = new BookingModel(
-                    UUID.randomUUID().toString(),
-                    userId,
-                    selectedCar.getId(),
-                    selectedCar.getName(),
-                    startDateStr,
-                    endDateStr,
-                    pickupLocation,
-                    totalAmount,
-                    "Confirmed"
-            );
-
-            // Save booking to Firebase Firestore
-            FirebaseFirestore.getInstance()
-                    .collection("Bookings")
-                    .document(booking.getBookingId())
-                    .set(booking)
-                    .addOnSuccessListener(unused -> {
-                        Toast.makeText(this, "Booking Confirmed!", Toast.LENGTH_SHORT).show();
-                        finish(); // Close activity
-                    })
-                    .addOnFailureListener(e -> {
-                        Toast.makeText(this, "Booking Failed! Please try again.", Toast.LENGTH_SHORT).show();
-                    });
+        // Set up views
+        tvCarName.setText(carName);
+        tvPaymentAmount.setText("₹" + amount);
+        
+        // Update UI for Razorpay integration
+        upiIdLayout.setVisibility(View.GONE); // Not needed for Razorpay
+        btnChooseUpiApp.setVisibility(View.GONE); // Not needed for Razorpay
+        
+        // Change button text to reflect Razorpay
+        btnConfirmPayment.setText(isAdvancePayment ? 
+                "Pay 50% Advance (₹" + amount + ") with Razorpay" : 
+                "Pay with Razorpay");
+        
+        // Load car image
+        if (carImage != null && !carImage.isEmpty()) {
+            Glide.with(this)
+                    .load(carImage)
+                    .placeholder(R.drawable.placeholder_car1)
+                    .error(R.drawable.placeholder_car1)
+                    .into(ivCarImage);
+        }
+        
+        // Set description based on payment type
+        if (isAdvancePayment) {
+            tvPaymentDescription.setText("This is a 50% advance payment required for booking with driver. " +
+                    "Remaining payment (₹" + (totalPrice - amount) + ") will be collected upon service delivery.");
+        } else {
+            tvPaymentDescription.setText("Please confirm payment to complete your booking.");
+        }
+        
+        // Update radio button text
+        radioUpi.setText("UPI / Wallet / NetBanking (Razorpay)");
+        radioCard.setText("Credit/Debit Card (Razorpay)");
+        
+        // Set up confirm payment button
+        btnConfirmPayment.setOnClickListener(v -> {
+            startRazorpayPayment();
         });
     }
-
-    // Helper function to calculate the number of days between the start and end date
-    private int calculateDays(String startDate, String endDate) {
+    
+    private void startRazorpayPayment() {
+        /* Skip internet connection check as it's causing issues
+        if (!CarRentalApp.getInstance().isInternetAvailable()) {
+            Toast.makeText(this, "No internet connection. Please check your network and try again.", 
+                    Toast.LENGTH_LONG).show();
+            
+            new AlertDialog.Builder(this)
+                    .setTitle("No Internet Connection")
+                    .setMessage("Razorpay requires an active internet connection. Please check your network settings and try again.")
+                    .setPositiveButton("OK", null)
+                    .show();
+            
+            // Re-enable the button
+            btnConfirmPayment.setEnabled(true);
+            return;
+        }
+        */
+    
+        // Initialize Razorpay checkout
+        Checkout checkout = new Checkout();
+        
+        // Explicitly log the API key being used (test key)
+        Log.d(TAG, "Using Razorpay Test API Key: " + RAZORPAY_API_KEY);
+        
+        checkout.setKeyID(RAZORPAY_API_KEY);
+        
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
-
-            // Parse the string dates to Date objects
-            Date start = sdf.parse(startDate);
-            Date end = sdf.parse(endDate);
-
-            // Get the time in milliseconds
-            long diff = end.getTime() - start.getTime();
-
-            // Calculate the difference in days
-            return (int) (diff / (1000 * 60 * 60 * 24)) + 1; // +1 to include the end day
-        } catch (ParseException e) {
-            e.printStackTrace();
-            return 1;  // Return 1 day in case of error
+            // Create options JSON object
+            JSONObject options = new JSONObject();
+            
+            // Validate amount (Razorpay requires minimum of ₹1)
+            if (amount < 1) {
+                Toast.makeText(this, "Minimum payment amount is ₹1", Toast.LENGTH_SHORT).show();
+                // Re-enable the button
+                btnConfirmPayment.setEnabled(true);
+                return;
+            }
+            
+            // Set amount in paise (100 paise = 1 INR)
+            options.put("amount", amount * 100);
+            options.put("currency", "INR");
+            
+            // Add a name for the order (required by Razorpay)
+            options.put("name", "Car Rental");
+            
+            // Set order details
+            String description = isAdvancePayment ? 
+                    "50% Advance Payment for " + carName : 
+                    "Payment for " + carName;
+            options.put("description", description);
+            
+            // Prefill customer information if available
+            JSONObject prefill = new JSONObject();
+            
+            // Get user email from Firebase Auth
+            FirebaseAuth auth = FirebaseAuth.getInstance();
+            if (auth.getCurrentUser() != null) {
+                String email = auth.getCurrentUser().getEmail();
+                if (email != null && !email.isEmpty()) {
+                    prefill.put("email", email);
+                    
+                    // Add log for debugging
+                    Log.d(TAG, "Using email for payment: " + email);
+                }
+            }
+            
+            options.put("prefill", prefill);
+            
+            // Theme customization
+            JSONObject theme = new JSONObject();
+            theme.put("color", "#4CAF50"); // Green color
+            options.put("theme", theme);
+            
+            // Log payment options for debugging
+            Log.d(TAG, "Razorpay payment options: " + options.toString());
+            
+            // Ensure amount is correct
+            Log.d(TAG, "Payment amount in rupees: " + amount);
+            Log.d(TAG, "Payment amount in paise: " + (amount * 100));
+            
+            // Show toast with payment details
+            Toast.makeText(this, 
+                "Initiating payment of ₹" + amount + 
+                (isAdvancePayment ? " (50% advance)" : ""), 
+                Toast.LENGTH_SHORT).show();
+            
+            // Show dialog with test card info before proceeding
+            new AlertDialog.Builder(this)
+                    .setTitle("Test Payment Information")
+                    .setMessage("You are about to make a test payment with Razorpay TEST MODE.\n\n" +
+                            "Use these test card details:\n" +
+                            "Card Number: 4111 1111 1111 1111\n" +
+                            "Expiry: Any future date (e.g. 12/25)\n" +
+                            "CVV: Any 3 digits (e.g. 123)\n" +
+                            "Name: Any name\n\n" +
+                            "For OTP: Use 1234 (or any number)\n\n" +
+                            "Continue to Razorpay?")
+                    .setPositiveButton("Continue", (dialog, which) -> {
+                        // Start Razorpay checkout
+                        checkout.open(this, options);
+                    })
+                    .setNegativeButton("Cancel", (dialog, which) -> {
+                        // Re-enable the payment button
+                        btnConfirmPayment.setEnabled(true);
+                    })
+                    .show();
+            
+        } catch (Exception e) {
+            Log.e(TAG, "Error starting Razorpay payment", e);
+            Toast.makeText(this, "Error starting payment: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            // Re-enable the button
+            btnConfirmPayment.setEnabled(true);
         }
     }
-}
-*/
+    
+    // Razorpay payment success callback
+    @Override
+    public void onPaymentSuccess(String razorpayPaymentId) {
+        Log.d(TAG, "Payment successful: " + razorpayPaymentId);
+        
+        // Store payment in Firestore
+        storePaymentInFirestore(razorpayPaymentId);
+    }
+    
+    // Razorpay payment error callback
+    @Override
+    public void onPaymentError(int code, String description) {
+        Log.e(TAG, "Payment failed: " + description + " (code: " + code + ")");
+        
+        // More detailed error handling based on error code
+        String errorMessage;
+        switch (code) {
+            case Checkout.NETWORK_ERROR:
+                errorMessage = "Network error. Please check your internet connection.";
+                break;
+            case Checkout.INVALID_OPTIONS:
+                errorMessage = "Invalid payment options provided.";
+                break;
+            case Checkout.PAYMENT_CANCELED:
+                errorMessage = "Payment was canceled by user.";
+                break;
+            case Checkout.TLS_ERROR:
+                errorMessage = "TLS connection error. Please update your device.";
+                break;
+            default:
+                errorMessage = "Payment failed: " + description;
+                break;
+        }
+        
+        // Show more descriptive error message
+        Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show();
+        
+        // Re-enable the payment button
+        btnConfirmPayment.setEnabled(true);
+    }
+    
+    private void storePaymentInFirestore(String razorpayPaymentId) {
+        // Create a payment record in Firestore
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        
+        // Create payment data
+        HashMap<String, Object> payment = new HashMap<>();
+        payment.put("razorpay_payment_id", razorpayPaymentId);
+        payment.put("user_id", userId);
+        payment.put("amount", amount);
+        payment.put("car_name", carName);
+        payment.put("payment_date", new SimpleDateFormat("dd/MM/yyyy HH:mm:ss", Locale.getDefault()).format(new Date()));
+        payment.put("payment_type", isAdvancePayment ? "advance_payment" : "full_payment");
+        payment.put("payment_method", "razorpay");
+        payment.put("payment_status", "success");
+        
+        if (isAdvancePayment) {
+            payment.put("total_price", totalPrice);
+            payment.put("remaining_amount", totalPrice - amount);
+        }
+        
+        // Save payment to Firestore
+        db.collection("payments")
+                .document(razorpayPaymentId)
+                .set(payment)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Payment record saved to Firestore successfully");
+                    
+                    // Show success toast
+                    Toast.makeText(this, "Payment successful!", Toast.LENGTH_SHORT).show();
+                    
+                    // Return result to BookingActivity
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("payment_id", razorpayPaymentId);
+                    resultIntent.putExtra("payment_method", "razorpay");
+                    setResult(Activity.RESULT_OK, resultIntent);
+                    
+                    // Close the activity
+                    finish();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to save payment record to Firestore", e);
+                    
+                    // Show error toast
+                    Toast.makeText(this, "Payment successful but failed to save details: " + e.getMessage(), 
+                            Toast.LENGTH_SHORT).show();
+                    
+                    // Return result to BookingActivity anyway
+                    Intent resultIntent = new Intent();
+                    resultIntent.putExtra("payment_id", razorpayPaymentId);
+                    resultIntent.putExtra("payment_method", "razorpay");
+                    setResult(Activity.RESULT_OK, resultIntent);
+                    
+                    // Close the activity
+                    finish();
+                });
+    }
+} 

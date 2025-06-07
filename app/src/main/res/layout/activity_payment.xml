@@ -1,42 +1,207 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:background="@drawable/background_gradient"
+    android:fillViewport="true">
 
     <LinearLayout
-        android:orientation="vertical"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
 
-        <!-- Car Summary -->
+        <!-- Payment Header -->
         <TextView
-            android:id="@+id/text_summary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Booking Summary"
+            android:fontFamily="sans-serif-medium"
+            android:gravity="center"
+            android:text="Payment"
+            android:textColor="#212121"
+            android:textSize="24sp"
             android:textStyle="bold"
-            android:textSize="18sp"
-            android:paddingBottom="12dp" />
+            android:layout_marginBottom="24dp" />
 
-        <!-- Price -->
-        <TextView
-            android:id="@+id/text_total_price"
+        <!-- Car Image and Details Card -->
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Total: ₹0"
-            android:textSize="16sp"
-            android:textColor="@android:color/holo_green_dark"
-            android:paddingTop="8dp" />
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="8dp">
 
-        <!-- Payment Button -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Car Image -->
+                <ImageView
+                    android:id="@+id/iv_car_image"
+                    android:layout_width="match_parent"
+                    android:layout_height="180dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/placeholder_car1" />
+
+                <!-- Car Name -->
+                <TextView
+                    android:id="@+id/tv_car_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:padding="16dp"
+                    android:text="Car Name"
+                    android:textColor="#212121"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Payment Details Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Payment Amount Header -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Payment Amount"
+                    android:textColor="#757575"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="8dp" />
+
+                <!-- Payment Amount -->
+                <TextView
+                    android:id="@+id/tv_payment_amount"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="₹0"
+                    android:textColor="#3F51B5"
+                    android:textSize="32sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Payment Description -->
+                <TextView
+                    android:id="@+id/tv_payment_description"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif"
+                    android:text="Payment description goes here"
+                    android:textColor="#212121"
+                    android:textSize="16sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Payment Methods Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="8dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Payment Methods Header -->
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="Payment Method"
+                    android:textColor="#212121"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="16dp" />
+
+                <!-- Updated payment methods section -->
+                <RadioGroup
+                    android:id="@+id/payment_method_group"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <RadioButton
+                        android:id="@+id/radio_upi"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="UPI"
+                        android:textSize="16sp"
+                        android:buttonTint="#3F51B5" />
+
+                    <RadioButton
+                        android:id="@+id/radio_card"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Credit/Debit Card"
+                        android:textSize="16sp"
+                        android:buttonTint="#3F51B5" />
+                </RadioGroup>
+
+                <!-- UPI ID input field - will be shown when UPI is selected -->
+                <com.google.android.material.textfield.TextInputLayout
+                    android:id="@+id/upi_id_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:hint="Enter UPI ID"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                    <com.google.android.material.textfield.TextInputEditText
+                        android:id="@+id/et_upi_id"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:inputType="text"
+                        android:maxLines="1" />
+                </com.google.android.material.textfield.TextInputLayout>
+                
+                <!-- UPI Apps Selection Button - for future integration -->
+                <Button
+                    android:id="@+id/btn_choose_upi_app"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/button_bg_rounded_green"
+                    android:fontFamily="sans-serif-medium"
+                    android:padding="12dp"
+                    android:text="Choose UPI App"
+                    android:textAllCaps="false"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Confirm Payment Button -->
         <Button
-            android:id="@+id/button_confirm_payment"
+            android:id="@+id/btn_confirm_payment"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Confirm Booking"
-            android:layout_marginTop="24dp"
-            android:backgroundTint="@android:color/holo_blue_dark"
-            android:textColor="@android:color/white" />
+            android:background="@drawable/button_bg_rounded_green"
+            android:fontFamily="sans-serif-medium"
+            android:padding="14dp"
+            android:text="Confirm Payment"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp" />
+
     </LinearLayout>
 </ScrollView>

@@ -24,10 +24,29 @@ android {
                 "proguard-rules.pro"
             )
         }
+        debug {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
+    }
+    
+    // For Razorpay SDK
+    packagingOptions {
+        exclude("META-INF/DEPENDENCIES")
+        exclude("META-INF/LICENSE")
+        exclude("META-INF/LICENSE.txt")
+        exclude("META-INF/license.txt")
+        exclude("META-INF/NOTICE")
+        exclude("META-INF/NOTICE.txt")
+        exclude("META-INF/notice.txt")
+        exclude("META-INF/ASL2.0")
     }
 }
 
@@ -64,4 +83,7 @@ dependencies {
     
     // OkHttp for network requests
     implementation ("com.squareup.okhttp3:okhttp:4.11.0")
+    
+    // Razorpay SDK - using the latest version
+    implementation ("com.razorpay:checkout:1.6.38")
 }

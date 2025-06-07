@@ -19,3 +19,18 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+
+# Razorpay ProGuard rules
+-keepclassmembers class * implements com.razorpay.PaymentResultListener {
+  public void onPaymentSuccess(String);
+  public void onPaymentError(int, String);
+}
+
+-keepclassmembers class * implements com.razorpay.PaymentResultWithDataListener {
+  public void onPaymentSuccess(String, com.razorpay.PaymentData);
+  public void onPaymentError(int, String, com.razorpay.PaymentData);
+}
+
+-keep class com.razorpay.** {*;}
+-keep class com.razorpay.checkout.** {*;}
+-optimizations !method/inlining/*
