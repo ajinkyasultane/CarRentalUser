@@ -2,6 +2,8 @@ package com.example.carrentaluser.fragments;
 
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -179,6 +181,12 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
             .whereEqualTo("user_id", userId)
             .get()
             .addOnSuccessListener(queryDocumentSnapshots -> {
+                // Check if fragment is still attached to avoid IllegalStateException
+                if (!isAdded()) {
+                    Log.d(TAG, "Fragment not attached, skipping UI update");
+                    return;
+                }
+                
                 activeBookings = new ArrayList<>();
                 List<String> bookingTitles = new ArrayList<>();
 
@@ -241,12 +249,23 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
                 }
             })
             .addOnFailureListener(e -> {
+                // Check if fragment is still attached to avoid IllegalStateException
+                if (!isAdded()) {
+                    Log.d(TAG, "Fragment not attached, skipping error UI update");
+                    return;
+                }
                 Log.e(TAG, "Error loading bookings: " + e.getMessage());
                 showEmptyState("Error loading bookings: " + e.getMessage());
             });
     }
 
     private void showEmptyState(String message) {
+        // Check if fragment is still attached to avoid IllegalStateException
+        if (!isAdded()) {
+            Log.d(TAG, "Fragment not attached, skipping empty state UI update");
+            return;
+        }
+        
         bookingSpinner.setVisibility(View.GONE);
         emptyBookingsText.setText(message);
         emptyBookingsText.setVisibility(View.VISIBLE);
@@ -262,23 +281,33 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void setupBookingSpinner(List<String> bookingTitles) {
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(
-            requireContext(),
-            android.R.layout.simple_spinner_item,
-            bookingTitles
-        );
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        // Check if fragment is still attached to avoid IllegalStateException
+        if (!isAdded()) {
+            Log.d(TAG, "Fragment not attached, skipping spinner setup");
+            return;
+        }
         
-        bookingSpinner.setVisibility(View.VISIBLE);
-        emptyBookingsText.setVisibility(View.GONE);
-        bookingSpinner.setAdapter(adapter);
-        
-        // Log successful setup
-        Log.d(TAG, "Spinner setup with " + bookingTitles.size() + " items");
-        
-        // Select the first booking automatically
-        if (!bookingTitles.isEmpty()) {
-            bookingSpinner.setSelection(0);
+        try {
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_item,
+                bookingTitles
+            );
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            
+            bookingSpinner.setVisibility(View.VISIBLE);
+            emptyBookingsText.setVisibility(View.GONE);
+            bookingSpinner.setAdapter(adapter);
+            
+            // Log successful setup
+            Log.d(TAG, "Spinner setup with " + bookingTitles.size() + " items");
+            
+            // Select the first booking automatically
+            if (!bookingTitles.isEmpty()) {
+                bookingSpinner.setSelection(0);
+            }
+        } catch (IllegalStateException e) {
+            Log.e(TAG, "Error setting up spinner: " + e.getMessage());
         }
     }
 
@@ -371,35 +400,86 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
     }
     
     private void geocodePickupAddress(String address, LatLng nearbyLocation) {
+        // Check if fragment is still attached before starting
+        if (!isAdded()) {
+            Log.d(TAG, "Fragment not attached, skipping geocoding");
+            return;
+        }
+        
         Thread geocodeThread = new Thread(() -> {
             try {
                 android.location.Geocoder geocoder = new android.location.Geocoder(requireContext(), java.util.Locale.getDefault());
                 List<android.location.Address> addresses = geocoder.getFromLocationName(address, 1);
                 
-                requireActivity().runOnUiThread(() -> {
-                    if (addresses != null && !addresses.isEmpty()) {
-                        android.location.Address location = addresses.get(0);
-                        Double pickupLat = location.getLatitude();
-                        Double pickupLng = location.getLongitude();
-                        
-                        pickupLocation = new LatLng(pickupLat, pickupLng);
-                        Log.d(TAG, "Geocoded pickup location: " + pickupLat + ", " + pickupLng);
-                        
-                        // Continue with the map update
-                        String carName = selectedBooking.getString("car_name");
-                        String startDate = selectedBooking.getString("start_date");
-                        String pickupLocationName = selectedBooking.getString("pickup_location");
-                        String branchName = selectedBooking.getString("branch_name");
-                        
-                        updateMapWithLocations(carName, startDate, pickupLocationName, branchName);
-                    } else {
+                // Use Handler to run on UI thread and check if fragment is still attached
+                Handler mainHandler = new Handler(Looper.getMainLooper());
+                mainHandler.post(() -> {
+                    // Check again if fragment is still attached
+                    if (!isAdded()) {
+                        Log.d(TAG, "Fragment not attached, skipping UI update after geocoding");
+                        return;
+                    }
+                    
+                    try {
+                        if (addresses != null && !addresses.isEmpty()) {
+                            android.location.Address location = addresses.get(0);
+                            Double pickupLat = location.getLatitude();
+                            Double pickupLng = location.getLongitude();
+                            
+                            pickupLocation = new LatLng(pickupLat, pickupLng);
+                            Log.d(TAG, "Geocoded pickup location: " + pickupLat + ", " + pickupLng);
+                            
+                            // Continue with the map update
+                            String carName = selectedBooking.getString("car_name");
+                            String startDate = selectedBooking.getString("start_date");
+                            String pickupLocationName = selectedBooking.getString("pickup_location");
+                            String branchName = selectedBooking.getString("branch_name");
+                            
+                            updateMapWithLocations(carName, startDate, pickupLocationName, branchName);
+                        } else {
+                            // Use location near branch as fallback
+                            Double pickupLat = nearbyLocation.latitude + 0.02;
+                            Double pickupLng = nearbyLocation.longitude + 0.02;
+                            pickupLocation = new LatLng(pickupLat, pickupLng);
+                            
+                            if (isAdded()) {
+                                Toast.makeText(requireContext(), 
+                                    "Could not find coordinates for pickup address", 
+                                    Toast.LENGTH_SHORT).show();
+                            }
+                                
+                            // Continue with the map update
+                            String carName = selectedBooking.getString("car_name");
+                            String startDate = selectedBooking.getString("start_date");
+                            String pickupLocationName = selectedBooking.getString("pickup_location");
+                            String branchName = selectedBooking.getString("branch_name");
+                            
+                            updateMapWithLocations(carName, startDate, pickupLocationName, branchName);
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Error processing geocoding results: " + e.getMessage());
+                    }
+                });
+            } catch (Exception e) {
+                Log.e(TAG, "Error geocoding address: " + e.getMessage());
+                
+                // Use Handler to run on UI thread and check if fragment is still attached
+                Handler mainHandler = new Handler(Looper.getMainLooper());
+                mainHandler.post(() -> {
+                    // Check again if fragment is still attached
+                    if (!isAdded()) {
+                        Log.d(TAG, "Fragment not attached, skipping error UI update after geocoding");
+                        return;
+                    }
+                    
+                    try {
                         // Use location near branch as fallback
                         Double pickupLat = nearbyLocation.latitude + 0.02;
                         Double pickupLng = nearbyLocation.longitude + 0.02;
                         pickupLocation = new LatLng(pickupLat, pickupLng);
                         
                         Toast.makeText(requireContext(), 
-                            "Could not find coordinates for pickup address", 
+                            "Error finding coordinates for pickup address", 
                             Toast.LENGTH_SHORT).show();
                             
                         // Continue with the map update
@@ -409,27 +489,9 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
                         String branchName = selectedBooking.getString("branch_name");
                         
                         updateMapWithLocations(carName, startDate, pickupLocationName, branchName);
+                    } catch (Exception innerException) {
+                        Log.e(TAG, "Error processing geocoding error: " + innerException.getMessage());
                     }
-                });
-            } catch (Exception e) {
-                Log.e(TAG, "Error geocoding address: " + e.getMessage());
-                requireActivity().runOnUiThread(() -> {
-                    // Use location near branch as fallback
-                    Double pickupLat = nearbyLocation.latitude + 0.02;
-                    Double pickupLng = nearbyLocation.longitude + 0.02;
-                    pickupLocation = new LatLng(pickupLat, pickupLng);
-                    
-                    Toast.makeText(requireContext(), 
-                        "Error finding coordinates for pickup address", 
-                        Toast.LENGTH_SHORT).show();
-                        
-                    // Continue with the map update
-                    String carName = selectedBooking.getString("car_name");
-                    String startDate = selectedBooking.getString("start_date");
-                    String pickupLocationName = selectedBooking.getString("pickup_location");
-                    String branchName = selectedBooking.getString("branch_name");
-                    
-                    updateMapWithLocations(carName, startDate, pickupLocationName, branchName);
                 });
             }
         });
@@ -438,64 +500,101 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
     }
     
     private void updateMapWithLocations(String carName, String startDate, String pickupLocationName, String branchName) {
+        // Check if fragment is still attached
+        if (!isAdded()) {
+            Log.d(TAG, "Fragment not attached, skipping map update");
+            return;
+        }
+        
         if (googleMap == null || branchLocation == null || pickupLocation == null) {
             Log.d(TAG, "Cannot update map: missing map or locations");
             return;
         }
         
-        // Clear previous markers
-        googleMap.clear();
-        
-        // Add branch marker
-        String branchSnippet = "Branch Location";
-        if (startDate != null) {
-            branchSnippet += "\nDate: " + startDate;
+        try {
+            // Clear previous markers
+            googleMap.clear();
+            
+            // Add branch marker
+            String branchSnippet = "Branch Location";
+            if (startDate != null) {
+                branchSnippet += "\nDate: " + startDate;
+            }
+            
+            // Add pickup marker - note: variable should be pickupMarker
+            pickupMarker = googleMap.addMarker(new MarkerOptions()
+                .position(pickupLocation)
+                .title("Pickup Location")
+                .snippet(pickupLocationName != null ? pickupLocationName : "Selected Pickup")
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                
+            // Add branch marker - note: variable should be branchMarker
+            branchMarker = googleMap.addMarker(new MarkerOptions()
+                .position(branchLocation)
+                .title(branchName != null ? branchName : "Branch Location")
+                .snippet(branchSnippet)
+                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)));
+                
+            if (pickupMarker != null) {
+                pickupMarker.showInfoWindow();
+            }
+            
+            // Draw route between pickup and branch
+            googleMap.addPolyline(new PolylineOptions()
+                .add(pickupLocation, branchLocation)
+                .width(8)
+                .color(Color.rgb(0, 102, 255)));
+                
+            // Calculate and update distance and time
+            calculateDistanceAndTime();
+            
+            // Zoom to show both points
+            LatLngBounds.Builder builder = new LatLngBounds.Builder();
+            builder.include(pickupLocation);
+            builder.include(branchLocation);
+            LatLngBounds bounds = builder.build();
+            
+            int padding = 150;
+            googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
+            
+            // Update car info text if it exists
+            if (carInfoTextView != null) {
+                String infoText = carName != null ? carName : "Selected Car";
+                if (startDate != null) {
+                    infoText += " - " + startDate;
+                }
+                carInfoTextView.setText(infoText);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating map: " + e.getMessage());
+            if (isAdded()) {
+                Toast.makeText(requireContext(), 
+                    "Error displaying route on map", 
+                    Toast.LENGTH_SHORT).show();
+            }
         }
-        
-        pickupMarker = googleMap.addMarker(new MarkerOptions()
-            .position(pickupLocation)
-            .title("Pickup Location")
-            .snippet(pickupLocationName != null ? pickupLocationName : "Selected Pickup")
-            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
-            
-        // Add pickup marker
-        pickupMarker = googleMap.addMarker(new MarkerOptions()
-            .position(branchLocation)
-            .title(branchName != null ? branchName : "Branch Location")
-            .snippet(branchSnippet)
-            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET)));
-            
-        if (pickupMarker != null) {
-            pickupMarker.showInfoWindow();
-        }
-        
-        // Draw route between pickup and branch
-        googleMap.addPolyline(new PolylineOptions()
-            .add(pickupLocation, branchLocation)
-            .width(8)
-            .color(Color.rgb(0, 102, 255)));
-            
-        // Calculate and update distance and time
-        calculateDistanceAndTime();
-        
-        // Zoom to show both points
-        LatLngBounds.Builder builder = new LatLngBounds.Builder();
-        builder.include(pickupLocation);
-        builder.include(branchLocation);
-        LatLngBounds bounds = builder.build();
-        
-        int padding = 150;
-        googleMap.animateCamera(CameraUpdateFactory.newLatLngBounds(bounds, padding));
     }
 
     // New method to fetch branch location data
     private void fetchBranchLocation(String branchId) {
+        // Check if fragment is still attached before starting
+        if (!isAdded()) {
+            Log.d(TAG, "Fragment not attached, skipping branch location fetch");
+            return;
+        }
+        
         Log.d(TAG, "Fetching branch location for ID: " + branchId);
         
         db.collection("branches")
             .document(branchId)
             .get()
             .addOnSuccessListener(documentSnapshot -> {
+                // Check if fragment is still attached
+                if (!isAdded()) {
+                    Log.d(TAG, "Fragment not attached, skipping branch location UI update");
+                    return;
+                }
+                
                 if (documentSnapshot.exists()) {
                     Double branchLat = documentSnapshot.getDouble("latitude");
                     Double branchLng = documentSnapshot.getDouble("longitude");
@@ -539,18 +638,28 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
                         updateMapWithLocations(carName, startDate, pickupLocationName, branchName);
                     } else {
                         Log.e(TAG, "Branch document doesn't contain valid coordinates");
-                        Toast.makeText(requireContext(), 
-                            "Branch location data is missing", 
-                            Toast.LENGTH_SHORT).show();
+                        if (isAdded()) {
+                            Toast.makeText(requireContext(), 
+                                "Branch location data is missing", 
+                                Toast.LENGTH_SHORT).show();
+                        }
                     }
                 } else {
                     Log.e(TAG, "Branch document not found");
-                    Toast.makeText(requireContext(), 
-                        "Branch information not found", 
-                        Toast.LENGTH_SHORT).show();
+                    if (isAdded()) {
+                        Toast.makeText(requireContext(), 
+                            "Branch information not found", 
+                            Toast.LENGTH_SHORT).show();
+                    }
                 }
             })
             .addOnFailureListener(e -> {
+                // Check if fragment is still attached
+                if (!isAdded()) {
+                    Log.d(TAG, "Fragment not attached, skipping branch location error UI update");
+                    return;
+                }
+                
                 Log.e(TAG, "Error fetching branch: " + e.getMessage());
                 Toast.makeText(requireContext(), 
                     "Error loading branch location", 
@@ -559,7 +668,23 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
     }
 
     private void calculateDistanceAndTime() {
-        if (pickupLocation != null && branchLocation != null) {
+        // Check if fragment is still attached
+        if (!isAdded()) {
+            Log.d(TAG, "Fragment not attached, skipping distance calculation");
+            return;
+        }
+        
+        if (pickupLocation == null || branchLocation == null) {
+            Log.d(TAG, "Cannot calculate distance: missing locations");
+            return;
+        }
+        
+        if (distanceValueTextView == null || timeValueTextView == null) {
+            Log.d(TAG, "Cannot update distance UI: TextViews are null");
+            return;
+        }
+        
+        try {
             double distanceInMeters = SphericalUtil.computeDistanceBetween(pickupLocation, branchLocation);
             double distanceInKm = distanceInMeters / 1000;
             
@@ -583,6 +708,8 @@ public class TrackingFragment extends Fragment implements OnMapReadyCallback {
             timeValueTextView.setText(formattedTime);
             
             Log.d(TAG, "Distance between pickup and branch: " + formattedDistance + " km, ETA: " + formattedTime);
+        } catch (Exception e) {
+            Log.e(TAG, "Error calculating distance/time: " + e.getMessage());
         }
     }
 

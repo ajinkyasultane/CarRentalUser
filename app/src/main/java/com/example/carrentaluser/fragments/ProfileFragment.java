@@ -149,12 +149,24 @@ public class ProfileFragment extends Fragment {
     }
 
     private void loadUserProfile() {
+        // Check if fragment is still attached
+        if (!isAdded()) {
+            Log.d(TAG, "Fragment not attached, skipping profile load");
+            return;
+        }
+        
         FirebaseUser currentUser = mAuth.getCurrentUser();
         if (currentUser != null) {
             // Get user data from Firebase
             db.collection("users").document(currentUser.getUid())
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
+                    // Check if fragment is still attached before updating UI
+                    if (!isAdded()) {
+                        Log.d(TAG, "Fragment not attached, skipping profile update");
+                        return;
+                    }
+                    
                     if (documentSnapshot.exists()) {
                         // Extract user data
                         userName = documentSnapshot.getString("full_name");
@@ -176,81 +188,108 @@ public class ProfileFragment extends Fragment {
                         updateUI();
                     } else {
                         Log.w(TAG, "User document does not exist");
-                        Toast.makeText(getContext(), "User profile not found", Toast.LENGTH_SHORT).show();
+                        if (isAdded()) {
+                            Toast.makeText(getContext(), "User profile not found", Toast.LENGTH_SHORT).show();
+                        }
                     }
                 })
                 .addOnFailureListener(e -> {
+                    // Check if fragment is still attached before showing Toast
+                    if (!isAdded()) {
+                        Log.d(TAG, "Fragment not attached, skipping error handling");
+                        return;
+                    }
+                    
                     Log.e(TAG, "Error loading user data", e);
                     Toast.makeText(getContext(), "Failed to load profile: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
         } else {
             Log.w(TAG, "No user is currently logged in");
             // Not logged in, redirect to login
-            Intent intent = new Intent(getActivity(), LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            requireActivity().finish();
+            if (isAdded() && getActivity() != null) {
+                Intent intent = new Intent(getActivity(), LoginActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                requireActivity().finish();
+            }
         }
     }
     
     private void updateUI() {
-        // Update UI with user data
-        greetingTextView.setText("Hello, " + userName + "!");
-        emailTextView.setText(userEmail);
-        ageTextView.setText("Age: " + userAge);
-        nameTextView.setText(userAddress);
-        
-        // Set mobile number if available
-        if (userMobile != null && !userMobile.isEmpty()) {
-            mobileTextView.setText("Mobile: " + userMobile);
-            mobileTextView.setVisibility(View.VISIBLE);
-        } else {
-            mobileTextView.setVisibility(View.GONE);
+        // Check if fragment is still attached
+        if (!isAdded()) {
+            Log.d(TAG, "Fragment not attached, skipping UI update");
+            return;
         }
         
-        // Load profile image with enhanced error handling
-        if (userImageUrl != null && !userImageUrl.isEmpty()) {
-            Log.d(TAG, "Loading profile image from URL: " + userImageUrl);
+        try {
+            // Update UI with user data
+            greetingTextView.setText("Hello, " + userName + "!");
+            emailTextView.setText(userEmail);
+            ageTextView.setText("Age: " + userAge);
+            nameTextView.setText(userAddress);
             
-            try {
-                RequestOptions requestOptions = new RequestOptions()
-                    .placeholder(R.drawable.ic_profile)
-                    .error(R.drawable.ic_profile)
-                    .diskCacheStrategy(DiskCacheStrategy.ALL);
+            // Set mobile number if available
+            if (userMobile != null && !userMobile.isEmpty()) {
+                mobileTextView.setText("Mobile: " + userMobile);
+                mobileTextView.setVisibility(View.VISIBLE);
+            } else {
+                mobileTextView.setVisibility(View.GONE);
+            }
+            
+            // Load profile image with enhanced error handling
+            if (userImageUrl != null && !userImageUrl.isEmpty()) {
+                Log.d(TAG, "Loading profile image from URL: " + userImageUrl);
                 
-                Glide.with(requireContext())
-                    .load(userImageUrl)
-                    .apply(requestOptions)
-                    .listener(new com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable>() {
-                        @Override
-                        public boolean onLoadFailed(@Nullable com.bumptech.glide.load.engine.GlideException e, 
-                                                   Object model, 
-                                                   com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, 
-                                                   boolean isFirstResource) {
-                            Log.e(TAG, "Image load failed", e);
-                            Toast.makeText(getContext(), "Failed to load profile image", Toast.LENGTH_SHORT).show();
-                            return false;
-                        }
-                        
-                        @Override
-                        public boolean onResourceReady(android.graphics.drawable.Drawable resource, 
-                                                     Object model, 
-                                                     com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, 
-                                                     com.bumptech.glide.load.DataSource dataSource, 
-                                                     boolean isFirstResource) {
-                            Log.d(TAG, "Image loaded successfully");
-                            return false;
-                        }
-                    })
-                    .into(profileImageView);
-            } catch (Exception e) {
-                Log.e(TAG, "Exception during image loading", e);
+                try {
+                    RequestOptions requestOptions = new RequestOptions()
+                        .placeholder(R.drawable.ic_profile)
+                        .error(R.drawable.ic_profile)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL);
+                    
+                    // Check again if still attached before loading image
+                    if (isAdded()) {
+                        Glide.with(requireContext())
+                            .load(userImageUrl)
+                            .apply(requestOptions)
+                            .listener(new com.bumptech.glide.request.RequestListener<android.graphics.drawable.Drawable>() {
+                                @Override
+                                public boolean onLoadFailed(@Nullable com.bumptech.glide.load.engine.GlideException e, 
+                                                        Object model, 
+                                                        com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, 
+                                                        boolean isFirstResource) {
+                                    Log.e(TAG, "Image load failed", e);
+                                    if (isAdded()) {
+                                        Toast.makeText(getContext(), "Failed to load profile image", Toast.LENGTH_SHORT).show();
+                                    }
+                                    return false;
+                                }
+                                
+                                @Override
+                                public boolean onResourceReady(android.graphics.drawable.Drawable resource, 
+                                                            Object model, 
+                                                            com.bumptech.glide.request.target.Target<android.graphics.drawable.Drawable> target, 
+                                                            com.bumptech.glide.load.DataSource dataSource, 
+                                                            boolean isFirstResource) {
+                                    Log.d(TAG, "Image loaded successfully");
+                                    return false;
+                                }
+                            })
+                            .into(profileImageView);
+                    } else {
+                        Log.d(TAG, "Fragment detached during image loading");
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Exception during image loading", e);
+                    profileImageView.setImageResource(R.drawable.ic_profile);
+                }
+            } else {
+                Log.w(TAG, "No profile image URL available");
+                // Use default image
                 profileImageView.setImageResource(R.drawable.ic_profile);
             }
-        } else {
-            Log.w(TAG, "No profile image URL available");
-            // Use default image
-            profileImageView.setImageResource(R.drawable.ic_profile);
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating UI", e);
         }
     }
     
