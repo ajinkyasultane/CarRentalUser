@@ -1,5 +1,6 @@
 package com.example.carrentaluser.adapters;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -10,6 +11,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Filter;
 import android.widget.Filterable;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -18,6 +20,9 @@ import com.bumptech.glide.Glide;
 import com.example.carrentaluser.BookingActivity;
 import com.example.carrentaluser.R;
 import com.example.carrentaluser.models.Car;
+import com.example.carrentaluser.models.UserModel;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,11 +32,15 @@ public class CarAdapter extends RecyclerView.Adapter<CarAdapter.CarViewHolder> i
     private Context context;
     private List<Car> carList;
     private List<Car> carListFull; // full copy for filtering
+    private FirebaseFirestore db;
+    private FirebaseAuth auth;
 
     public CarAdapter(Context context, List<Car> carList) {
         this.context = context;
         this.carList = carList;
         this.carListFull = new ArrayList<>(carList);
+        this.db = FirebaseFirestore.getInstance();
+        this.auth = FirebaseAuth.getInstance();
     }
 
     @NonNull
@@ -55,13 +64,55 @@ public class CarAdapter extends RecyclerView.Adapter<CarAdapter.CarViewHolder> i
                 .into(holder.image);
 
         holder.bookButton.setOnClickListener(v -> {
-            Intent intent = new Intent(context, BookingActivity.class);
-            intent.putExtra("car_name", car.getName());
-            intent.putExtra("car_price", car.getPrice());
-            intent.putExtra("car_image", car.getImageUrl());
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            context.startActivity(intent);
+            // Check if user is authenticated
+            if (auth.getCurrentUser() == null) {
+                Toast.makeText(context, "Please login to book a car", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            // Check if user account is active
+            String userId = auth.getCurrentUser().getUid();
+            db.collection("users").document(userId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        UserModel user = documentSnapshot.toObject(UserModel.class);
+                        
+                        if (user != null && !user.isActive()) {
+                            // User account is blocked
+                            showBlockedUserDialog();
+                        } else {
+                            // User account is active, proceed with booking
+                            Intent intent = new Intent(context, BookingActivity.class);
+                            intent.putExtra("car_name", car.getName());
+                            intent.putExtra("car_price", car.getPrice());
+                            intent.putExtra("car_image", car.getImageUrl());
+                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            context.startActivity(intent);
+                        }
+                    } else {
+                        // Assume new users are active by default
+                        Intent intent = new Intent(context, BookingActivity.class);
+                        intent.putExtra("car_name", car.getName());
+                        intent.putExtra("car_price", car.getPrice());
+                        intent.putExtra("car_image", car.getImageUrl());
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(intent);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(context, "Failed to check user status: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
         });
+    }
+    
+    private void showBlockedUserDialog() {
+        new AlertDialog.Builder(context)
+            .setTitle("Account Blocked")
+            .setMessage("Your account has been blocked by the admin. Please contact support for assistance.")
+            .setPositiveButton("OK", null)
+            .setCancelable(false)
+            .show();
     }
 
     @Override

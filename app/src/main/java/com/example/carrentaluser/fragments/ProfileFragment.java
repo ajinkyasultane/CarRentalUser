@@ -24,6 +24,7 @@ import com.example.carrentaluser.EditProfileActivity;
 import com.example.carrentaluser.ImageViewActivity;
 import com.example.carrentaluser.LoginActivity;
 import com.example.carrentaluser.R;
+import com.example.carrentaluser.WalletActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -36,7 +37,7 @@ public class ProfileFragment extends Fragment {
     private ImageView profileImageView;
     private CardView profileImageContainer;
     private TextView greetingTextView, emailTextView, ageTextView, nameTextView, mobileTextView;
-    private Button editProfileBtn, changePasswordBtn, logoutBtn;
+    private Button editProfileBtn, changePasswordBtn, logoutBtn, myWalletBtn;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
@@ -88,6 +89,7 @@ public class ProfileFragment extends Fragment {
         editProfileBtn = view.findViewById(R.id.editProfileBtn);
         changePasswordBtn = view.findViewById(R.id.changePasswordBtn);
         logoutBtn = view.findViewById(R.id.logoutBtn);
+        myWalletBtn = view.findViewById(R.id.myWalletBtn);
     }
     
     private void setupListeners() {
@@ -123,6 +125,12 @@ public class ProfileFragment extends Fragment {
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
             requireActivity().finish();
+        });
+        
+        // Set click listener for my wallet button
+        myWalletBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(getActivity(), WalletActivity.class);
+            startActivity(intent);
         });
     }
 

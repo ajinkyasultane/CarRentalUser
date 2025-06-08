@@ -192,6 +192,7 @@
                     android:visibility="gone">
                     
                     <ImageView
+                        android:id="@+id/refund_icon"
                         android:layout_width="18dp"
                         android:layout_height="18dp"
                         android:src="@android:drawable/ic_menu_revert"

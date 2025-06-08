@@ -15,6 +15,7 @@
         android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:name=".CarRentalApp"
@@ -57,6 +58,15 @@
         </activity>
 
         <activity
+            android:name=".BankAccountActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
+        <activity
+            android:name=".AddBankAccountActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
+
+        <activity
             android:name=".MapSelectionActivity"
             android:exported="false"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
@@ -70,13 +80,14 @@
             android:name=".EditProfileActivity"
             android:exported="false"
             android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
-        <activity android:name=".ForgotPasswordActivity"
+        <activity 
+            android:name=".ForgotPasswordActivity"
             android:exported="false"
-            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"   />
-
-        <activity android:name=".ChangePasswordActivity"
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
+        <activity 
+            android:name=".ChangePasswordActivity"
             android:exported="false"
-            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar"/>
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
         <activity
             android:name=".ImageViewActivity"
             android:exported="false"
@@ -99,8 +110,10 @@
             android:name=".RazorpayTestActivity"
             android:exported="false"
             android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
-<!--        <activity android:name=".ChangePasswordActivity" android:exported="false" />-->
-<!--        <activity android:name=".ForgotPasswordActivity" android:exported="false" />-->
+        <activity
+            android:name=".WalletActivity"
+            android:exported="false"
+            android:theme="@style/Theme.MaterialComponents.Light.NoActionBar" />
     </application>
 
 </manifest>

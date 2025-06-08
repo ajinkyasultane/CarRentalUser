@@ -18,9 +18,12 @@ import com.example.carrentaluser.models.Booking;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.WriteBatch;
 
 import java.util.List;
 import java.util.HashMap;
+import java.util.Date;
+import java.util.Map;
 
 public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHolder> {
 
@@ -32,26 +35,23 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView carImage;
-        TextView carName, bookingDates, location, status, totalPrice;
+        TextView carName, dates, branch, status, totalPrice;
+        TextView refundStatus;
+        LinearLayout advancePaymentSection, refundSection;
         Button cancelBtn;
+        ImageView refundIcon;
         
         // Payment related views
-        LinearLayout advancePaymentSection;
         TextView paymentStatus, advanceAmount, remainingAmount, paymentMethod;
-        
-        // Refund related views
-        LinearLayout refundSection;
-        TextView refundStatus;
 
-        public ViewHolder(@NonNull View itemView) {
+        public ViewHolder(View itemView) {
             super(itemView);
             carImage = itemView.findViewById(R.id.booking_image);
             carName = itemView.findViewById(R.id.booking_car_name);
-            bookingDates = itemView.findViewById(R.id.booking_dates);
-            location = itemView.findViewById(R.id.booking_location);
+            dates = itemView.findViewById(R.id.booking_dates);
+            branch = itemView.findViewById(R.id.booking_location);
             status = itemView.findViewById(R.id.booking_status);
             totalPrice = itemView.findViewById(R.id.booking_total_price);
-            cancelBtn = itemView.findViewById(R.id.btn_cancel_booking);
             
             // Initialize payment related views
             advancePaymentSection = itemView.findViewById(R.id.advance_payment_section);
@@ -60,9 +60,10 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
             remainingAmount = itemView.findViewById(R.id.booking_remaining_amount);
             paymentMethod = itemView.findViewById(R.id.booking_payment_method);
             
-            // Initialize refund related views
-            refundSection = itemView.findViewById(R.id.refund_section);
             refundStatus = itemView.findViewById(R.id.booking_refund_status);
+            refundSection = itemView.findViewById(R.id.refund_section);
+            cancelBtn = itemView.findViewById(R.id.btn_cancel_booking);
+            refundIcon = itemView.findViewById(R.id.refund_icon);
         }
     }
 
@@ -78,14 +79,14 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
         Booking booking = bookingList.get(position);
 
         holder.carName.setText("Car Name: " +booking.getCar_name());
-        holder.bookingDates.setText("From: " + booking.getStart_date() + " To: " + booking.getEnd_date());
+        holder.dates.setText("From: " + booking.getStart_date() + " To: " + booking.getEnd_date());
         
         // Check if pickup location exists
         String pickup = booking.getPickup_location();
         if (pickup != null && !pickup.isEmpty()) {
-            holder.location.setText("Pickup: " + pickup);
+            holder.branch.setText("Pickup: " + pickup);
         } else {
-            holder.location.setText("Branch: " + booking.getBranch_name());
+            holder.branch.setText("Branch: " + booking.getBranch_name());
         }
         
         // Set status with color and background based on status value
@@ -154,7 +155,15 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
             // Handle refund section visibility for cancelled bookings
             if (status.equalsIgnoreCase("Cancelled") && booking.isRefund_processed()) {
                 holder.refundSection.setVisibility(View.VISIBLE);
-                holder.refundStatus.setText("Refund: ₹" + booking.getRefund_amount() + " Processed");
+                if (booking.isCredited_to_wallet()) {
+                    holder.refundStatus.setText("Refund: ₹" + booking.getRefund_amount() + " credited to wallet");
+                    holder.refundIcon.setImageResource(android.R.drawable.ic_menu_agenda);
+                    holder.refundStatus.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.holo_green_dark));
+                } else {
+                    holder.refundStatus.setText("Refund: ₹" + booking.getRefund_amount() + " processed");
+                    holder.refundIcon.setImageResource(android.R.drawable.ic_menu_revert);
+                    holder.refundStatus.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.holo_red_dark));
+                }
             } else {
                 holder.refundSection.setVisibility(View.GONE);
             }
@@ -174,44 +183,173 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
     }
     
     private void cancelBooking(ViewHolder holder, Booking booking) {
-        FirebaseFirestore.getInstance()
-                .collection("bookings")
-                .whereEqualTo("user_id", FirebaseAuth.getInstance().getCurrentUser().getUid())
-                .whereEqualTo("start_date", booking.getStart_date())
-                .whereEqualTo("car_name", booking.getCar_name())
+        // Get the Firestore instance and user ID
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        String bookingId = booking.getBooking_id();
+        
+        // Show processing indicator
+        Toast.makeText(holder.itemView.getContext(), 
+            "Processing cancellation...", Toast.LENGTH_SHORT).show();
+        
+        // First, try to get the booking directly by ID if available
+        if (bookingId != null && !bookingId.isEmpty()) {
+            db.collection("bookings").document(bookingId)
                 .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
-                    for (DocumentSnapshot snapshot : queryDocumentSnapshots) {
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        // Found the booking, check its current status
+                        String currentStatus = documentSnapshot.getString("status");
+                        Boolean refundProcessed = documentSnapshot.getBoolean("refund_processed");
+                        
+                        if ("Cancelled".equalsIgnoreCase(currentStatus)) {
+                            // Already cancelled
+                            Toast.makeText(holder.itemView.getContext(), 
+                                "Booking already cancelled", Toast.LENGTH_SHORT).show();
+                                
+                            // Update the UI to reflect cancelled status
+                            booking.setStatus("Cancelled");
+                            notifyDataSetChanged();
+                            return;
+                        }
+                        
                         // Check if advance payment was made
-                        boolean advancePaymentDone = booking.isAdvance_payment_done();
-                        String paymentId = booking.getPayment_id();
-                        int refundAmount = booking.getAdvance_payment_amount();
+                        Boolean advancePaymentDone = documentSnapshot.getBoolean("advance_payment_done");
+                        String paymentId = documentSnapshot.getString("payment_id");
+                        Number advanceAmount = documentSnapshot.getLong("advance_payment_amount");
                         
                         // Update booking status to Cancelled
-                        snapshot.getReference().update("status", "Cancelled")
-                                .addOnSuccessListener(unused -> {
-                                    // Process refund if advance payment was made
-                                    if (advancePaymentDone && paymentId != null && !paymentId.isEmpty()) {
-                                        processRefund(holder, booking, paymentId, refundAmount);
-                                    } else {
-                                        // No refund needed, just show cancellation message
-                                        Toast.makeText(holder.itemView.getContext(), 
-                                            "Booking cancelled", Toast.LENGTH_SHORT).show();
-                                    }
+                        documentSnapshot.getReference().update("status", "Cancelled")
+                            .addOnSuccessListener(unused -> {
+                                // Update local booking status
+                                booking.setStatus("Cancelled");
+                                
+                                // Process refund if advance payment was made
+                                if (advancePaymentDone != null && advancePaymentDone && 
+                                    paymentId != null && !paymentId.isEmpty() && 
+                                    advanceAmount != null && advanceAmount.intValue() > 0 &&
+                                    (refundProcessed == null || !refundProcessed)) {
                                     
-                                    booking.setStatus("Cancelled");
-                                    notifyDataSetChanged();
-                                })
-                                .addOnFailureListener(e -> {
+                                    // Process the refund to wallet
+                                    processRefund(holder, booking, paymentId, advanceAmount.intValue());
+                                } else if (refundProcessed != null && refundProcessed) {
+                                    // Refund was already processed
                                     Toast.makeText(holder.itemView.getContext(), 
-                                        "Cancel failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                });
+                                        "Booking cancelled. Refund was already processed.", 
+                                        Toast.LENGTH_SHORT).show();
+                                    notifyDataSetChanged();
+                                } else {
+                                    // No refund needed or no payment data
+                                    Toast.makeText(holder.itemView.getContext(), 
+                                        "Booking cancelled. No advance payment was made.", 
+                                        Toast.LENGTH_SHORT).show();
+                                    notifyDataSetChanged();
+                                }
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(holder.itemView.getContext(), 
+                                    "Cancel failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
+                    } else {
+                        // Couldn't find booking by ID, try fallback method
+                        findAndCancelBookingByDetails(holder, booking);
                     }
                 })
                 .addOnFailureListener(e -> {
+                    // Error, try fallback method
                     Toast.makeText(holder.itemView.getContext(), 
-                        "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        "Error accessing booking: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    findAndCancelBookingByDetails(holder, booking);
                 });
+        } else {
+            // No booking ID, use fallback method
+            findAndCancelBookingByDetails(holder, booking);
+        }
+    }
+    
+    /**
+     * Fallback method to find and cancel a booking by user ID, start date, and car name
+     */
+    private void findAndCancelBookingByDetails(ViewHolder holder, Booking booking) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        
+        // Query for matching bookings
+        db.collection("bookings")
+            .whereEqualTo("user_id", userId)
+            .whereEqualTo("start_date", booking.getStart_date())
+            .whereEqualTo("car_name", booking.getCar_name())
+            .get()
+            .addOnSuccessListener(queryDocumentSnapshots -> {
+                if (queryDocumentSnapshots.isEmpty()) {
+                    Toast.makeText(holder.itemView.getContext(), 
+                        "Could not find booking details", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                // Process the first matching booking
+                DocumentSnapshot snapshot = queryDocumentSnapshots.getDocuments().get(0);
+                
+                // Check if booking is already cancelled and refund processed
+                if (snapshot.getString("status") != null && 
+                    snapshot.getString("status").equalsIgnoreCase("Cancelled")) {
+                    
+                    Toast.makeText(holder.itemView.getContext(), 
+                        "Booking already cancelled", Toast.LENGTH_SHORT).show();
+                    
+                    // Update the UI to reflect cancelled status
+                    booking.setStatus("Cancelled");
+                    notifyDataSetChanged();
+                    return;
+                }
+                
+                // Check if advance payment was made
+                Boolean advancePaymentDone = snapshot.getBoolean("advance_payment_done");
+                String paymentId = snapshot.getString("payment_id");
+                Number advanceAmount = snapshot.getLong("advance_payment_amount");
+                Boolean refundProcessed = snapshot.getBoolean("refund_processed");
+                
+                // Save the booking ID for future reference
+                String docId = snapshot.getId();
+                booking.setBooking_id(docId);
+                
+                // Update booking status to Cancelled
+                snapshot.getReference().update("status", "Cancelled")
+                    .addOnSuccessListener(unused -> {
+                        // Update local booking status
+                        booking.setStatus("Cancelled");
+                        
+                        // Process refund if advance payment was made
+                        if (advancePaymentDone != null && advancePaymentDone && 
+                            paymentId != null && !paymentId.isEmpty() && 
+                            advanceAmount != null && advanceAmount.intValue() > 0 &&
+                            (refundProcessed == null || !refundProcessed)) {
+                            
+                            // Process the refund to wallet
+                            processRefund(holder, booking, paymentId, advanceAmount.intValue());
+                        } else if (refundProcessed != null && refundProcessed) {
+                            // Refund was already processed
+                            Toast.makeText(holder.itemView.getContext(), 
+                                "Booking cancelled. Refund was already processed.", 
+                                Toast.LENGTH_SHORT).show();
+                            notifyDataSetChanged();
+                        } else {
+                            // No refund needed or no payment data
+                            Toast.makeText(holder.itemView.getContext(), 
+                                "Booking cancelled. No advance payment was made.", 
+                                Toast.LENGTH_SHORT).show();
+                            notifyDataSetChanged();
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(holder.itemView.getContext(), 
+                            "Cancel failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    });
+            })
+            .addOnFailureListener(e -> {
+                Toast.makeText(holder.itemView.getContext(), 
+                    "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
     }
     
     /**
@@ -225,52 +363,137 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
         // Create a refund record in Firestore
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-        String refundId = "refund_" + System.currentTimeMillis();
+        String bookingId = booking.getBooking_id();
         
-        // Create refund data
-        HashMap<String, Object> refund = new HashMap<>();
-        refund.put("original_payment_id", paymentId);
-        refund.put("refund_id", refundId);
-        refund.put("user_id", userId);
-        refund.put("amount", amount);
-        refund.put("booking_id", booking.getBooking_id());
-        refund.put("car_name", booking.getCar_name());
-        refund.put("refund_date", new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss", 
-            java.util.Locale.getDefault()).format(new java.util.Date()));
-        refund.put("refund_status", "Processed");
-        refund.put("payment_method", booking.getPayment_method());
+        // Show processing message
+        Toast.makeText(holder.itemView.getContext(), 
+            "Processing refund to wallet...", Toast.LENGTH_SHORT).show();
         
-        // Store refund record in Firestore
-        db.collection("refunds")
-            .document(refundId)
-            .set(refund)
-            .addOnSuccessListener(aVoid -> {
-                // Update the booking document to include refund information
-                FirebaseFirestore.getInstance()
-                    .collection("bookings")
-                    .document(booking.getBooking_id())
-                    .update(
-                        "refund_processed", true,
-                        "refund_id", refundId,
-                        "refund_amount", amount,
-                        "refund_date", refund.get("refund_date")
-                    )
-                    .addOnSuccessListener(unused -> {
-                        // Show success message
-                        Toast.makeText(holder.itemView.getContext(), 
-                            "Booking cancelled. Refund of ₹" + amount + " has been processed.", 
-                            Toast.LENGTH_LONG).show();
+        // First check if a refund has already been processed for this booking
+        db.collection("bookings").document(bookingId).get()
+            .addOnSuccessListener(documentSnapshot -> {
+                if (!documentSnapshot.exists()) {
+                    Toast.makeText(holder.itemView.getContext(),
+                        "Error: Booking not found", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                Boolean refundProcessed = documentSnapshot.getBoolean("refund_processed");
+                
+                if (refundProcessed != null && refundProcessed) {
+                    // Refund already processed, show message
+                    Toast.makeText(holder.itemView.getContext(),
+                        "Refund already processed for this booking", 
+                        Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                
+                // Generate unique refund ID
+                String refundId = "refund_" + System.currentTimeMillis();
+                
+                // Get current wallet balance
+                db.collection("users").document(userId).get()
+                    .addOnSuccessListener(userDoc -> {
+                        if (!userDoc.exists()) {
+                            Toast.makeText(holder.itemView.getContext(),
+                                "User profile not found", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+                        
+                        // Get current balance
+                        double currentBalance = 0;
+                        if (userDoc.contains("wallet_balance")) {
+                            Object balanceObj = userDoc.get("wallet_balance");
+                            if (balanceObj instanceof Long) {
+                                currentBalance = ((Long) balanceObj).doubleValue();
+                            } else if (balanceObj instanceof Double) {
+                                currentBalance = (Double) balanceObj;
+                            } else if (balanceObj instanceof Integer) {
+                                currentBalance = ((Integer) balanceObj).doubleValue();
+                            }
+                        }
+                        
+                        // Calculate new balance
+                        final double newBalance = currentBalance + amount;
+                        
+                        // Create a batch for atomic operations
+                        WriteBatch batch = db.batch();
+                        
+                        // 1. Update wallet balance
+                        batch.update(db.collection("users").document(userId), 
+                            "wallet_balance", newBalance);
+                        
+                        // 2. Create refund record
+                        Map<String, Object> refundData = new HashMap<>();
+                        refundData.put("original_payment_id", paymentId);
+                        refundData.put("refund_id", refundId);
+                        refundData.put("user_id", userId);
+                        refundData.put("amount", amount);
+                        refundData.put("booking_id", bookingId);
+                        refundData.put("car_name", booking.getCar_name());
+                        refundData.put("refund_date", new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss", 
+                            java.util.Locale.getDefault()).format(new java.util.Date()));
+                        refundData.put("refund_status", "Processed");
+                        refundData.put("payment_method", booking.getPayment_method());
+                        
+                        batch.set(db.collection("refunds").document(refundId), refundData);
+                        
+                        // 3. Create wallet transaction
+                        String transactionId = "trans_" + System.currentTimeMillis();
+                        Map<String, Object> transactionData = new HashMap<>();
+                        transactionData.put("type", "credit");
+                        transactionData.put("description", "Refund for cancelled booking: " + booking.getCar_name());
+                        transactionData.put("amount", amount);
+                        transactionData.put("timestamp", new Date());
+                        transactionData.put("status", "completed");
+                        transactionData.put("related_booking_id", bookingId);
+                        transactionData.put("refund_id", refundId);
+                        
+                        batch.set(
+                            db.collection("users").document(userId)
+                              .collection("transactions").document(transactionId), 
+                            transactionData
+                        );
+                        
+                        // 4. Update booking with refund info
+                        batch.update(db.collection("bookings").document(bookingId),
+                            "refund_processed", true,
+                            "refund_id", refundId,
+                            "refund_amount", amount,
+                            "refund_date", refundData.get("refund_date"),
+                            "credited_to_wallet", true
+                        );
+                        
+                        // Commit all operations as a batch
+                        batch.commit()
+                            .addOnSuccessListener(aVoid -> {
+                                // Success - show message
+                                Toast.makeText(holder.itemView.getContext(),
+                                    "✅ Refund of ₹" + amount + " has been credited to your wallet", 
+                                    Toast.LENGTH_LONG).show();
+                                
+                                // Update local object
+                                booking.setRefund_processed(true);
+                                booking.setRefund_amount(amount);
+                                booking.setCredited_to_wallet(true);
+                                notifyDataSetChanged();
+                            })
+                            .addOnFailureListener(e -> {
+                                Toast.makeText(holder.itemView.getContext(),
+                                    "Failed to process refund: " + e.getMessage(), 
+                                    Toast.LENGTH_LONG).show();
+                            });
                     })
                     .addOnFailureListener(e -> {
-                        Toast.makeText(holder.itemView.getContext(), 
-                            "Refund processed but failed to update booking: " + e.getMessage(), 
+                        Toast.makeText(holder.itemView.getContext(),
+                            "Failed to get wallet balance: " + e.getMessage(), 
                             Toast.LENGTH_SHORT).show();
                     });
             })
             .addOnFailureListener(e -> {
-                Toast.makeText(holder.itemView.getContext(), 
-                    "Booking cancelled but refund failed: " + e.getMessage(), 
-                    Toast.LENGTH_LONG).show();
+                Toast.makeText(holder.itemView.getContext(),
+                    "Error checking booking: " + e.getMessage(),
+                    Toast.LENGTH_SHORT).show();
             });
     }
 

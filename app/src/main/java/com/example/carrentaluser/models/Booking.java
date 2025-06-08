@@ -29,6 +29,7 @@ public class Booking {
     private String refund_id;
     private int refund_amount;
     private String refund_date;
+    private boolean credited_to_wallet;
 
     // Required empty constructor for Firestore
     public Booking() {
@@ -148,6 +149,10 @@ public class Booking {
         return refund_date;
     }
 
+    public boolean isCredited_to_wallet() {
+        return credited_to_wallet;
+    }
+
     // Setters if needed (optional for Firestore but helpful in app logic)
 
     public void setStatus(String status) {
@@ -180,5 +185,9 @@ public class Booking {
     
     public void setRefund_date(String refund_date) {
         this.refund_date = refund_date;
+    }
+    
+    public void setCredited_to_wallet(boolean credited_to_wallet) {
+        this.credited_to_wallet = credited_to_wallet;
     }
 }

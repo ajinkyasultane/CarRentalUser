@@ -917,6 +917,41 @@ public class BookingActivity extends AppCompatActivity {
             return;
         }
         
+        // Check if user account is active
+        String userId = mAuth.getCurrentUser().getUid();
+        db.collection("users").document(userId)
+            .get()
+            .addOnSuccessListener(documentSnapshot -> {
+                if (documentSnapshot.exists()) {
+                    Boolean isActive = documentSnapshot.getBoolean("active");
+                    
+                    if (isActive != null && !isActive) {
+                        // User account is blocked
+                        showBlockedUserDialog();
+                    } else {
+                        // User account is active, proceed with booking
+                        continueBookingSubmission(startDate, endDate, pickup, branch);
+                    }
+                } else {
+                    // Assume new users are active by default
+                    continueBookingSubmission(startDate, endDate, pickup, branch);
+                }
+            })
+            .addOnFailureListener(e -> {
+                Toast.makeText(this, "Failed to check user status: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
+    }
+    
+    private void showBlockedUserDialog() {
+        new AlertDialog.Builder(this)
+            .setTitle("Account Blocked")
+            .setMessage("Your account has been blocked by the admin. You cannot make bookings at this time. Please contact support for assistance.")
+            .setPositiveButton("OK", (dialog, which) -> finish())
+            .setCancelable(false)
+            .show();
+    }
+    
+    private void continueBookingSubmission(String startDate, String endDate, String pickup, String branch) {
         // Check distance again if "With Driver" is selected to prevent booking beyond 50km
         if (radioWithDriver.isChecked() && 
             selectedBranchLatitude != 0 && selectedBranchLongitude != 0 &&

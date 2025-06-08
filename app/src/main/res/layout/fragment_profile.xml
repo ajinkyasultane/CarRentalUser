@@ -215,6 +215,19 @@
                     android:textColor="#212121"
                     android:layout_marginBottom="16dp" />
 
+                <!-- My Wallet Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/myWalletBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="My Wallet"
+                    app:icon="@android:drawable/ic_menu_send"
+                    app:iconGravity="textStart"
+                    android:backgroundTint="#009688"
+                    android:textAllCaps="false"
+                    app:cornerRadius="12dp"
+                    android:layout_marginBottom="16dp" />
+
     <!-- Edit Profile Button -->
                 <com.google.android.material.button.MaterialButton
         android:id="@+id/editProfileBtn"

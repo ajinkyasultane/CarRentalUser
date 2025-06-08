@@ -55,39 +55,44 @@ android {
 }
 
 dependencies {
-
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    implementation(libs.firebase.messaging)
     implementation(libs.swiperefreshlayout)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation(platform("com.google.firebase:firebase-bom:33.13.0"))
+    
+    // Firebase/Google Play Services BOM (Bill of Materials)
+    implementation(platform("com.google.firebase:firebase-bom:33.0.0"))
+    
+    // Firebase dependencies
     implementation("com.google.firebase:firebase-analytics")
-    implementation ("com.google.firebase:firebase-auth:23.2.0")
-    implementation ("com.google.firebase:firebase-firestore:25.1.4")
-    implementation ("com.google.firebase:firebase-storage:21.0.1")
-    implementation ("androidx.cardview:cardview:1.0.0")
-    implementation ("com.github.bumptech.glide:glide:4.15.1")
-    annotationProcessor ("com.github.bumptech.glide:compiler:4.15.1")
-    implementation ("com.github.bumptech.glide:glide:4.15.1")
-    implementation ("com.google.android.gms:play-services-auth:21.3.0") // or the specific service you're using
-    implementation ("com.google.android.gms:play-services-maps:19.2.0")
-    implementation ("com.github.chrisbanes:PhotoView:2.3.0")
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-storage")
+    implementation("com.google.firebase:firebase-messaging")
+    
+    // Google Play Services
+    implementation("com.google.android.gms:play-services-base:18.3.0")
+    implementation("com.google.android.gms:play-services-auth:21.0.0") 
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+    
+    // Useful libraries
+    implementation("androidx.cardview:cardview:1.0.0")
+    implementation("com.github.bumptech.glide:glide:4.15.1")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.15.1")
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
+    implementation("com.google.maps.android:android-maps-utils:3.4.0")
     
     // Lottie Animation
-    implementation ("com.airbnb.android:lottie:6.3.0")
-    
-    // Location and directions
-    implementation ("com.google.android.gms:play-services-location:21.2.0")
-    implementation ("com.google.maps.android:android-maps-utils:3.4.0")
+    implementation("com.airbnb.android:lottie:6.3.0")
     
     // OkHttp for network requests
-    implementation ("com.squareup.okhttp3:okhttp:4.11.0")
+    implementation("com.squareup.okhttp3:okhttp:4.11.0")
     
     // Razorpay SDK - using the latest version
-    implementation ("com.razorpay:checkout:1.6.38")
+    implementation("com.razorpay:checkout:1.6.38")
 }
