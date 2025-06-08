@@ -3,6 +3,7 @@ package com.example.carrentaluser;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.WindowManager;
 import android.view.animation.AccelerateDecelerateInterpolator;
 import android.view.animation.Animation;
@@ -12,8 +13,12 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.carrentaluser.utils.SessionManager;
+
 public class SplashActivity extends AppCompatActivity {
 
+    private static final String TAG = "SplashActivity";
+    
     // Splash screen duration - 3 seconds
     private static final int SPLASH_DURATION = 3000;
     
@@ -21,6 +26,9 @@ public class SplashActivity extends AppCompatActivity {
     private ImageView carImageView;
     private TextView appNameText;
     private TextView taglineText;
+    
+    // Session manager
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +39,9 @@ public class SplashActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         
         setContentView(R.layout.activity_splash);
+        
+        // Initialize session manager
+        sessionManager = SessionManager.getInstance(this);
 
         // Initialize UI elements
         carImageView = findViewById(R.id.car_image);
@@ -85,8 +96,17 @@ public class SplashActivity extends AppCompatActivity {
     }
     
     private void navigateToLogin() {
-        Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
-        startActivity(intent);
+        // Check if user is already logged in
+        if (sessionManager.isLoggedIn()) {
+            Log.d(TAG, "User is already logged in, navigating to MainActivity");
+            Intent intent = new Intent(SplashActivity.this, MainActivity.class);
+            startActivity(intent);
+        } else {
+            Log.d(TAG, "No active session found, navigating to LoginActivity");
+            Intent intent = new Intent(SplashActivity.this, LoginActivity.class);
+            startActivity(intent);
+        }
+        
         overridePendingTransition(R.anim.fade_in, R.anim.fade_out);
         finish();
     }

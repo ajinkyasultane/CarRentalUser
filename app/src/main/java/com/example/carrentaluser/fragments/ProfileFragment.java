@@ -25,6 +25,7 @@ import com.example.carrentaluser.ImageViewActivity;
 import com.example.carrentaluser.LoginActivity;
 import com.example.carrentaluser.R;
 import com.example.carrentaluser.WalletActivity;
+import com.example.carrentaluser.utils.SessionManager;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -41,6 +42,7 @@ public class ProfileFragment extends Fragment {
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
+    private SessionManager sessionManager;
 
     private String userName = "";
     private String userEmail = "";
@@ -67,6 +69,7 @@ public class ProfileFragment extends Fragment {
         // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
+        sessionManager = SessionManager.getInstance(requireContext());
         
         // Initialize views
         initViews(view);
@@ -115,16 +118,27 @@ public class ProfileFragment extends Fragment {
 
         // Set click listener for logout button
         logoutBtn.setOnClickListener(v -> {
-            // Sign out from Firebase
-            if (mAuth != null) {
-                mAuth.signOut();
-            }
-            
-            // Navigate to login
-            Intent intent = new Intent(getActivity(), LoginActivity.class);
-            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            startActivity(intent);
-            requireActivity().finish();
+            // Show confirmation dialog
+            new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("Logout")
+                .setMessage("Are you sure you want to logout?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    // Clear session in SessionManager
+                    sessionManager.logout();
+                    
+                    // Sign out from Firebase
+                    if (mAuth != null) {
+                        mAuth.signOut();
+                    }
+                    
+                    // Navigate to login
+                    Intent intent = new Intent(getActivity(), LoginActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                    startActivity(intent);
+                    requireActivity().finish();
+                })
+                .setNegativeButton("No", null)
+                .show();
         });
         
         // Set click listener for my wallet button

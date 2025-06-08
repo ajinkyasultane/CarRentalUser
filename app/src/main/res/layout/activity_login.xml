@@ -154,6 +154,16 @@
                             android:inputType="textPassword"
                             android:textSize="16sp" />
                     </com.google.android.material.textfield.TextInputLayout>
+                    
+                    <!-- Remember Me Checkbox -->
+                    <CheckBox
+                        android:id="@+id/rememberMeCheckbox"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Remember Me"
+                        android:textColor="#757575"
+                        android:layout_marginBottom="16dp"
+                        android:checked="true" />
 
                     <!-- Sign In Button -->
                     <com.google.android.material.button.MaterialButton

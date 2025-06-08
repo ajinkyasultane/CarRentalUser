@@ -7,6 +7,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,8 +16,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import com.example.carrentaluser.R;
+import com.example.carrentaluser.utils.SessionManager;
 import com.example.carrentaluser.utils.TokenManager;
 
 public class LoginActivity extends AppCompatActivity {
@@ -26,7 +29,9 @@ public class LoginActivity extends AppCompatActivity {
     private TextInputEditText emailInput, passwordInput;
     private Button loginBtn;
     private TextView goToRegister, forgotPasswordLink;
+    private CheckBox rememberMeCheckbox;
     private FirebaseAuth mAuth;
+    private SessionManager sessionManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,6 +39,15 @@ public class LoginActivity extends AppCompatActivity {
         setContentView(R.layout.activity_login);
 
         mAuth = FirebaseAuth.getInstance();
+        sessionManager = SessionManager.getInstance(this);
+        
+        // Check if user is already logged in
+        if (sessionManager.isLoggedIn()) {
+            // Redirect to main activity
+            startActivity(new Intent(this, MainActivity.class));
+            finish();
+            return;
+        }
 
         // Initialize UI elements
         emailInput = findViewById(R.id.emailInput);
@@ -41,6 +55,7 @@ public class LoginActivity extends AppCompatActivity {
         loginBtn = findViewById(R.id.loginBtn);
         goToRegister = findViewById(R.id.goToRegister);
         forgotPasswordLink = findViewById(R.id.forgotPasswordLink);
+        rememberMeCheckbox = findViewById(R.id.rememberMeCheckbox);
 
         // Set up login button click listener
         loginBtn.setOnClickListener(v -> {
@@ -83,11 +98,23 @@ public class LoginActivity extends AppCompatActivity {
         // Authenticate with Firebase
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnSuccessListener(authResult -> {
+                    // Get current user
+                    FirebaseUser user = mAuth.getCurrentUser();
+                    
                     // Upload FCM token if needed
                     try {
                         TokenManager.uploadToken();
                     } catch (Exception e) {
                         Log.e(TAG, "Error uploading token: " + e.getMessage());
+                    }
+                    
+                    // Save login session if Remember Me is checked
+                    if (user != null) {
+                        if (rememberMeCheckbox.isChecked()) {
+                            // Create login session
+                            sessionManager.createLoginSession(user.getUid(), user.getEmail());
+                            Log.d(TAG, "Remember me enabled, saving session");
+                        }
                     }
 
                     // Show success message

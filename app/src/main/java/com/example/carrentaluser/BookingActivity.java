@@ -845,8 +845,8 @@ public class BookingActivity extends AppCompatActivity {
                 // Calculate 50% of the total price
                 int advancePayment = totalPrice / 2;
                 
-                // Open PaymentActivity for 50% payment
-                Intent intent = new Intent(BookingActivity.this, PaymentActivity.class);
+                // Open PaymentMethodActivity for choosing payment method
+                Intent intent = new Intent(BookingActivity.this, PaymentMethodActivity.class);
                 intent.putExtra("car_name", carName);
                 intent.putExtra("car_image", carImageUrl);
                 intent.putExtra("amount", advancePayment);

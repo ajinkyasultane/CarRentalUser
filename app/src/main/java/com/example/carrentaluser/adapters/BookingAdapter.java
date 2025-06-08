@@ -152,12 +152,13 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
                 holder.paymentMethod.setVisibility(View.GONE);
             }
             
-            // Handle refund section visibility for cancelled bookings
-            if (status.equalsIgnoreCase("Cancelled") && booking.isRefund_processed()) {
+            // Handle refund section visibility for cancelled or rejected bookings
+            if ((status.equalsIgnoreCase("Cancelled") || status.equalsIgnoreCase("Rejected")) 
+                    && booking.isRefund_processed()) {
                 holder.refundSection.setVisibility(View.VISIBLE);
                 if (booking.isCredited_to_wallet()) {
-                    holder.refundStatus.setText("Refund: ₹" + booking.getRefund_amount() + " credited to wallet");
-                    holder.refundIcon.setImageResource(android.R.drawable.ic_menu_agenda);
+                    holder.refundStatus.setText("+ ₹" + booking.getRefund_amount() + " credited to wallet");
+                    holder.refundIcon.setImageResource(android.R.drawable.ic_input_add);
                     holder.refundStatus.setTextColor(holder.itemView.getContext().getResources().getColor(android.R.color.holo_green_dark));
                 } else {
                     holder.refundStatus.setText("Refund: ₹" + booking.getRefund_amount() + " processed");
@@ -442,7 +443,14 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
                         String transactionId = "trans_" + System.currentTimeMillis();
                         Map<String, Object> transactionData = new HashMap<>();
                         transactionData.put("type", "credit");
-                        transactionData.put("description", "Refund for cancelled booking: " + booking.getCar_name());
+                        
+                        // Special description for admin rejections vs user cancellations
+                        if (booking.getStatus().equalsIgnoreCase("Rejected")) {
+                            transactionData.put("description", "Refund for rejected booking: " + booking.getCar_name() + " (credited to wallet)");
+                        } else {
+                            transactionData.put("description", "Refund credited to wallet for booking: " + booking.getCar_name());
+                        }
+                        
                         transactionData.put("amount", amount);
                         transactionData.put("timestamp", new Date());
                         transactionData.put("status", "completed");

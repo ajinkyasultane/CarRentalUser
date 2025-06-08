@@ -29,6 +29,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 import android.widget.ImageView;
@@ -245,8 +246,11 @@ public class PaymentActivity extends AppCompatActivity implements PaymentResultL
     public void onPaymentSuccess(String razorpayPaymentId) {
         Log.d(TAG, "Payment successful: " + razorpayPaymentId);
         
+        // Get booking ID from intent if available
+        String bookingId = getIntent().getStringExtra("booking_id");
+        
         // Store payment in Firestore
-        storePaymentInFirestore(razorpayPaymentId);
+        storePaymentInFirestore(razorpayPaymentId, bookingId);
     }
     
     // Razorpay payment error callback
@@ -281,7 +285,7 @@ public class PaymentActivity extends AppCompatActivity implements PaymentResultL
         btnConfirmPayment.setEnabled(true);
     }
     
-    private void storePaymentInFirestore(String razorpayPaymentId) {
+    private void storePaymentInFirestore(String razorpayPaymentId, String bookingId) {
         // Create a payment record in Firestore
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -302,6 +306,11 @@ public class PaymentActivity extends AppCompatActivity implements PaymentResultL
             payment.put("remaining_amount", totalPrice - amount);
         }
         
+        // If this is for a booking, add the booking ID
+        if (bookingId != null && !bookingId.isEmpty()) {
+            payment.put("booking_id", bookingId);
+        }
+        
         // Save payment to Firestore
         db.collection("payments")
                 .document(razorpayPaymentId)
@@ -309,17 +318,12 @@ public class PaymentActivity extends AppCompatActivity implements PaymentResultL
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "Payment record saved to Firestore successfully");
                     
-                    // Show success toast
-                    Toast.makeText(this, "Payment successful!", Toast.LENGTH_SHORT).show();
-                    
-                    // Return result to BookingActivity
-                    Intent resultIntent = new Intent();
-                    resultIntent.putExtra("payment_id", razorpayPaymentId);
-                    resultIntent.putExtra("payment_method", "razorpay");
-                    setResult(Activity.RESULT_OK, resultIntent);
-                    
-                    // Close the activity
-                    finish();
+                    // If this is for a booking, update the booking with payment details
+                    if (bookingId != null && !bookingId.isEmpty()) {
+                        updateBookingWithPaymentDetails(bookingId, razorpayPaymentId);
+                    } else {
+                        finishPaymentProcess(razorpayPaymentId);
+                    }
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Failed to save payment record to Firestore", e);
@@ -328,14 +332,51 @@ public class PaymentActivity extends AppCompatActivity implements PaymentResultL
                     Toast.makeText(this, "Payment successful but failed to save details: " + e.getMessage(), 
                             Toast.LENGTH_SHORT).show();
                     
-                    // Return result to BookingActivity anyway
-                    Intent resultIntent = new Intent();
-                    resultIntent.putExtra("payment_id", razorpayPaymentId);
-                    resultIntent.putExtra("payment_method", "razorpay");
-                    setResult(Activity.RESULT_OK, resultIntent);
-                    
-                    // Close the activity
-                    finish();
+                    // Return result anyway
+                    finishPaymentProcess(razorpayPaymentId);
                 });
+    }
+    
+    private void updateBookingWithPaymentDetails(String bookingId, String paymentId) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        
+        Map<String, Object> paymentUpdate = new HashMap<>();
+        paymentUpdate.put("payment_method", "razorpay");
+        paymentUpdate.put("payment_id", paymentId);
+        paymentUpdate.put("payment_timestamp", new Date());
+        
+        if (isAdvancePayment) {
+            paymentUpdate.put("advance_payment_done", true);
+            paymentUpdate.put("advance_payment_amount", amount);
+            paymentUpdate.put("remaining_payment", totalPrice - amount);
+        } else {
+            paymentUpdate.put("full_payment_done", true);
+            paymentUpdate.put("payment_amount", amount);
+        }
+        
+        db.collection("bookings").document(bookingId)
+                .update(paymentUpdate)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Booking updated with payment details successfully");
+                    finishPaymentProcess(paymentId);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Failed to update booking with payment details", e);
+                    finishPaymentProcess(paymentId);
+                });
+    }
+    
+    private void finishPaymentProcess(String paymentId) {
+        // Show success toast
+        Toast.makeText(this, "Payment successful!", Toast.LENGTH_SHORT).show();
+        
+        // Return result to calling activity
+        Intent resultIntent = new Intent();
+        resultIntent.putExtra("payment_id", paymentId);
+        resultIntent.putExtra("payment_method", "razorpay");
+        setResult(Activity.RESULT_OK, resultIntent);
+        
+        // Close the activity
+        finish();
     }
 } 

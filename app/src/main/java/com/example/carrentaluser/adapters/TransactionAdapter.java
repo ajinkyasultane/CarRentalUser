@@ -100,24 +100,36 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
             int iconResId;
     
             String type = transaction.getType();
-            if (type != null && "credit".equals(type)) {
+            
+            // Check if this is any type of refund transaction
+            boolean isRefundToWallet = description != null && 
+                    (description.toLowerCase().contains("refund") || 
+                     (description.toLowerCase().contains("rejected") && 
+                      description.toLowerCase().contains("booking")) ||
+                     description.toLowerCase().contains("credited to wallet"));
+            
+            // Handle refund to wallet as a credit transaction
+            if (isRefundToWallet) {
+                // Always show refunds as credits (green)
                 amountText = "+ ₹" + String.format(Locale.getDefault(), "%.2f", transaction.getAmount());
                 backgroundResId = R.drawable.credit_background;
                 iconResId = android.R.drawable.ic_input_add;
+                holder.amountTextView.setTextColor(ContextCompat.getColor(context, android.R.color.holo_green_dark));
+            } else if (type != null && "credit".equals(type)) {
+                // Normal credit transaction
+                amountText = "+ ₹" + String.format(Locale.getDefault(), "%.2f", transaction.getAmount());
+                backgroundResId = R.drawable.credit_background;
+                iconResId = android.R.drawable.ic_input_add;
+                holder.amountTextView.setTextColor(ContextCompat.getColor(context, android.R.color.holo_green_dark));
             } else {
+                // Debit transaction
                 amountText = "- ₹" + String.format(Locale.getDefault(), "%.2f", transaction.getAmount());
                 backgroundResId = R.drawable.debit_background;
                 iconResId = android.R.drawable.ic_menu_send;
+                holder.amountTextView.setTextColor(ContextCompat.getColor(context, android.R.color.holo_red_dark));
             }
     
             holder.amountTextView.setText(amountText);
-            
-            // Set colors based on transaction type
-            if (type != null && "credit".equals(type)) {
-                holder.amountTextView.setTextColor(ContextCompat.getColor(context, android.R.color.holo_green_dark));
-            } else {
-                holder.amountTextView.setTextColor(ContextCompat.getColor(context, android.R.color.holo_red_dark));
-            }
             
             holder.iconView.setBackground(ContextCompat.getDrawable(context, backgroundResId));
             holder.iconView.setImageResource(iconResId);
