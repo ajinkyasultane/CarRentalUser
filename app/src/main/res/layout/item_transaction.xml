@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="4dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="2dp">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="12dp">
+
+        <!-- Transaction Type Icon -->
+        <ImageView
+            android:id="@+id/transactionTypeIcon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/circle_background"
+            android:padding="8dp"
+            android:src="@android:drawable/ic_menu_add"
+            android:tint="#FFFFFF"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Transaction Title -->
+        <TextView
+            android:id="@+id/transactionTitleTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:text="Added to wallet"
+            android:textColor="#212121"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/transactionAmountTextView"
+            app:layout_constraintStart_toEndOf="@+id/transactionTypeIcon"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Transaction Date -->
+        <TextView
+            android:id="@+id/transactionDateTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="2dp"
+            android:text="May 15, 2023 • 10:30 AM"
+            android:textColor="#757575"
+            android:textSize="12sp"
+            app:layout_constraintEnd_toEndOf="@+id/transactionTitleTextView"
+            app:layout_constraintStart_toEndOf="@+id/transactionTypeIcon"
+            app:layout_constraintTop_toBottomOf="@+id/transactionTitleTextView" />
+
+        <!-- Transaction Status -->
+        <TextView
+            android:id="@+id/transactionStatusTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_marginTop="2dp"
+            android:text="Completed"
+            android:textColor="#4CAF50"
+            android:textSize="12sp"
+            android:textStyle="italic"
+            app:layout_constraintEnd_toEndOf="@+id/transactionTitleTextView"
+            app:layout_constraintStart_toEndOf="@+id/transactionTypeIcon"
+            app:layout_constraintTop_toBottomOf="@+id/transactionDateTextView" />
+
+        <!-- Transaction Amount -->
+        <TextView
+            android:id="@+id/transactionAmountTextView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="+ ₹500"
+            android:textColor="#4CAF50"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- Transaction ID (hidden by default) -->
+        <TextView
+            android:id="@+id/transactionIdTextView"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="ID: xyz123"
+            android:textColor="#9E9E9E"
+            android:textSize="10sp"
+            android:visibility="gone"
+            app:layout_constraintEnd_toEndOf="@+id/transactionStatusTextView"
+            app:layout_constraintStart_toStartOf="@+id/transactionStatusTextView"
+            app:layout_constraintTop_toBottomOf="@+id/transactionStatusTextView" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.cardview.widget.CardView> 
