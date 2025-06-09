@@ -105,8 +105,6 @@ public class BankAccountActivity extends AppCompatActivity {
         showLoading(true);
         
         db.collection("users").document(userId).collection("bank_accounts")
-                .orderBy("isPrimary", Query.Direction.DESCENDING)  // Primary accounts first
-                .orderBy("lastUpdated", Query.Direction.DESCENDING) // Then most recently updated
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     showLoading(false);
@@ -125,6 +123,24 @@ public class BankAccountActivity extends AppCompatActivity {
                             bankAccounts.add(account);
                         }
                     }
+                    
+                    // Sort the accounts locally instead of in the query
+                    // Primary accounts first, then by last updated date
+                    bankAccounts.sort((a1, a2) -> {
+                        // First compare by isPrimary (true comes before false)
+                        if (a1.isPrimary() && !a2.isPrimary()) {
+                            return -1;
+                        } else if (!a1.isPrimary() && a2.isPrimary()) {
+                            return 1;
+                        }
+                        
+                        // If both have same primary status, compare by lastUpdated
+                        if (a1.getLastUpdated() != null && a2.getLastUpdated() != null) {
+                            return a2.getLastUpdated().compareTo(a1.getLastUpdated()); // Descending order
+                        }
+                        
+                        return 0;
+                    });
                     
                     adapter.notifyDataSetChanged();
                     showEmptyState(bankAccounts.isEmpty());

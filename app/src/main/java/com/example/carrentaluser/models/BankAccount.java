@@ -1,53 +1,42 @@
 package com.example.carrentaluser.models;
 
-import com.google.firebase.firestore.DocumentId;
-import com.google.firebase.firestore.IgnoreExtraProperties;
-import com.google.firebase.firestore.PropertyName;
-import com.google.firebase.firestore.ServerTimestamp;
+import com.google.firebase.Timestamp;
 
+import java.io.Serializable;
 import java.util.Date;
 
-@IgnoreExtraProperties
-public class BankAccount {
-    @DocumentId
+public class BankAccount implements Serializable {
     private String id;
-    private String userId;
     private String accountHolderName;
     private String accountNumber;
-    private String ifscCode;
+    private String accountType;
     private String bankName;
-    private String accountType; // "Savings" or "Current"
-    private String upiId; // Optional UPI ID
-    @ServerTimestamp
-    private Date createdAt;
-    @ServerTimestamp
-    private Date lastUpdated;
-    private boolean isVerified; // Whether the account is verified
-    private boolean isPrimary; // Whether this is the primary account for the user
+    private String ifscCode;
+    private boolean isPrimary;
+    private boolean isVerified;
+    private Timestamp createdAt;
+    private Timestamp lastUpdated;
+    private String userId;
+    private String upiId;
 
-    // Default constructor required for Firestore
+    // Empty constructor needed for Firestore
     public BankAccount() {
     }
 
-    public BankAccount(String id, String userId, String accountHolderName, String accountNumber, 
-                       String ifscCode, String bankName, String accountType, String upiId,
-                       Date createdAt, Date lastUpdated, boolean isVerified, boolean isPrimary) {
-        this.id = id;
-        this.userId = userId;
+    public BankAccount(String accountHolderName, String accountNumber, String accountType,
+                       String bankName, String ifscCode, boolean isPrimary, String userId) {
         this.accountHolderName = accountHolderName;
         this.accountNumber = accountNumber;
-        this.ifscCode = ifscCode;
-        this.bankName = bankName;
         this.accountType = accountType;
-        this.upiId = upiId;
-        this.createdAt = createdAt;
-        this.lastUpdated = lastUpdated;
-        this.isVerified = isVerified;
+        this.bankName = bankName;
+        this.ifscCode = ifscCode;
         this.isPrimary = isPrimary;
+        this.isVerified = false;
+        this.userId = userId;
+        this.createdAt = Timestamp.now();
+        this.lastUpdated = Timestamp.now();
     }
 
-    // Getters and setters
-    @PropertyName("id")
     public String getId() {
         return id;
     }
@@ -56,16 +45,6 @@ public class BankAccount {
         this.id = id;
     }
 
-    @PropertyName("userId")
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    @PropertyName("accountHolderName")
     public String getAccountHolderName() {
         return accountHolderName;
     }
@@ -74,7 +53,6 @@ public class BankAccount {
         this.accountHolderName = accountHolderName;
     }
 
-    @PropertyName("accountNumber")
     public String getAccountNumber() {
         return accountNumber;
     }
@@ -83,25 +61,6 @@ public class BankAccount {
         this.accountNumber = accountNumber;
     }
 
-    @PropertyName("ifscCode")
-    public String getIfscCode() {
-        return ifscCode;
-    }
-
-    public void setIfscCode(String ifscCode) {
-        this.ifscCode = ifscCode;
-    }
-
-    @PropertyName("bankName")
-    public String getBankName() {
-        return bankName;
-    }
-
-    public void setBankName(String bankName) {
-        this.bankName = bankName;
-    }
-
-    @PropertyName("accountType")
     public String getAccountType() {
         return accountType;
     }
@@ -110,43 +69,22 @@ public class BankAccount {
         this.accountType = accountType;
     }
 
-    @PropertyName("upiId")
-    public String getUpiId() {
-        return upiId;
+    public String getBankName() {
+        return bankName;
     }
 
-    public void setUpiId(String upiId) {
-        this.upiId = upiId;
+    public void setBankName(String bankName) {
+        this.bankName = bankName;
     }
 
-    @PropertyName("createdAt")
-    public Date getCreatedAt() {
-        return createdAt;
+    public String getIfscCode() {
+        return ifscCode;
     }
 
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
+    public void setIfscCode(String ifscCode) {
+        this.ifscCode = ifscCode;
     }
 
-    @PropertyName("lastUpdated")
-    public Date getLastUpdated() {
-        return lastUpdated;
-    }
-
-    public void setLastUpdated(Date lastUpdated) {
-        this.lastUpdated = lastUpdated;
-    }
-
-    @PropertyName("isVerified")
-    public boolean isVerified() {
-        return isVerified;
-    }
-
-    public void setVerified(boolean verified) {
-        isVerified = verified;
-    }
-
-    @PropertyName("isPrimary")
     public boolean isPrimary() {
         return isPrimary;
     }
@@ -155,21 +93,57 @@ public class BankAccount {
         isPrimary = primary;
     }
 
-    @Override
-    public String toString() {
-        return "BankAccount{" +
-                "id='" + id + '\'' +
-                ", userId='" + userId + '\'' +
-                ", accountHolderName='" + accountHolderName + '\'' +
-                ", accountNumber='" + accountNumber + '\'' +
-                ", ifscCode='" + ifscCode + '\'' +
-                ", bankName='" + bankName + '\'' +
-                ", accountType='" + accountType + '\'' +
-                ", upiId='" + upiId + '\'' +
-                ", createdAt=" + createdAt +
-                ", lastUpdated=" + lastUpdated +
-                ", isVerified=" + isVerified +
-                ", isPrimary=" + isPrimary +
-                '}';
+    public boolean isVerified() {
+        return isVerified;
+    }
+
+    public void setVerified(boolean verified) {
+        isVerified = verified;
+    }
+
+    public Timestamp getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Timestamp createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public Timestamp getLastUpdated() {
+        return lastUpdated;
+    }
+
+    public void setLastUpdated(Timestamp lastUpdated) {
+        this.lastUpdated = lastUpdated;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getUpiId() {
+        return upiId;
+    }
+
+    public void setUpiId(String upiId) {
+        this.upiId = upiId;
+    }
+
+    public void updateLastUpdated() {
+        this.lastUpdated = Timestamp.now();
+    }
+
+    // Helper method to get masked account number for display
+    public String getMaskedAccountNumber() {
+        if (accountNumber == null || accountNumber.length() <= 4) {
+            return accountNumber;
+        }
+        
+        String lastFourDigits = accountNumber.substring(accountNumber.length() - 4);
+        return "XXXX XXXX " + lastFourDigits;
     }
 } 

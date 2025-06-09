@@ -1456,6 +1456,6 @@ public class WalletActivity extends AppCompatActivity implements PaymentResultLi
             })
             .addOnFailureListener(e -> {
                 Log.e(TAG, "Error getting user data for wallet payment refund: " + e.getMessage(), e);
-            });
+                });
     }
 } 

@@ -228,6 +228,19 @@
                     app:cornerRadius="12dp"
                     android:layout_marginBottom="16dp" />
 
+                <!-- Manage Bank Accounts Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/manageBankAccountsBtn"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:text="Manage Bank Accounts"
+                    app:icon="@android:drawable/ic_menu_manage"
+                    app:iconGravity="textStart"
+                    android:backgroundTint="#FF5722"
+                    android:textAllCaps="false"
+                    app:cornerRadius="12dp"
+                    android:layout_marginBottom="16dp" />
+
     <!-- Edit Profile Button -->
                 <com.google.android.material.button.MaterialButton
         android:id="@+id/editProfileBtn"

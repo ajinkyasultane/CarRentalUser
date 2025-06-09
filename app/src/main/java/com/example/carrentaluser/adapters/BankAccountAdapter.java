@@ -51,24 +51,31 @@ public class BankAccountAdapter extends RecyclerView.Adapter<BankAccountAdapter.
         BankAccount account = bankAccounts.get(position);
         
         // Set bank name
-        holder.bankNameTextView.setText(account.getBankName());
+        holder.tvBankName.setText(account.getBankName());
         
         // Set account holder name
-        holder.accountHolderTextView.setText(account.getAccountHolderName());
+        holder.tvAccountHolder.setText(account.getAccountHolderName());
         
         // Set masked account number (show only last 4 digits)
         String accountNumber = account.getAccountNumber();
         String maskedNumber = "XXXX XXXX " + accountNumber.substring(Math.max(0, accountNumber.length() - 4));
-        holder.accountNumberTextView.setText(maskedNumber);
+        holder.tvAccountNumber.setText(maskedNumber);
         
         // Set IFSC code
-        holder.ifscCodeTextView.setText("IFSC: " + account.getIfscCode());
+        holder.tvIfscCode.setText("IFSC: " + account.getIfscCode());
         
         // Show primary badge if this is the primary account
-        holder.primaryBadgeTextView.setVisibility(account.isPrimary() ? View.VISIBLE : View.GONE);
+        holder.tvPrimaryIndicator.setVisibility(account.isPrimary() ? View.VISIBLE : View.GONE);
         
         // Show verified badge if the account is verified
-        holder.verifiedBadgeTextView.setVisibility(account.isVerified() ? View.VISIBLE : View.GONE);
+        holder.tvVerificationStatus.setVisibility(account.isVerified() ? View.VISIBLE : View.GONE);
+        if (account.isVerified()) {
+            holder.tvVerificationStatus.setText("Verified");
+            holder.tvVerificationStatus.setTextColor(context.getResources().getColor(R.color.verified_green));
+        } else {
+            holder.tvVerificationStatus.setText("Verification Pending");
+            holder.tvVerificationStatus.setTextColor(context.getResources().getColor(R.color.pending_orange));
+        }
         
         // Set click listener for the entire item
         holder.itemView.setOnClickListener(v -> {
@@ -77,40 +84,24 @@ public class BankAccountAdapter extends RecyclerView.Adapter<BankAccountAdapter.
             }
         });
         
-        // Set options menu
-        holder.optionsMenuImageView.setOnClickListener(v -> {
-            showOptionsMenu(v, account);
-        });
-    }
-
-    private void showOptionsMenu(View view, BankAccount account) {
-        PopupMenu popupMenu = new PopupMenu(context, view);
-        popupMenu.inflate(R.menu.menu_bank_account);
-        
-        // Show/hide "Set as Primary" option based on current status
-        popupMenu.getMenu().findItem(R.id.action_set_primary).setVisible(!account.isPrimary());
-        
-        popupMenu.setOnMenuItemClickListener(item -> {
-            int itemId = item.getItemId();
-            
-            if (itemId == R.id.action_edit) {
-                // Handle edit action
-                Toast.makeText(context, "Edit account feature coming soon", Toast.LENGTH_SHORT).show();
-                return true;
-            } else if (itemId == R.id.action_delete) {
-                // Handle delete action
-                deleteAccount(account);
-                return true;
-            } else if (itemId == R.id.action_set_primary) {
-                // Handle set as primary action
-                setPrimaryAccount(account);
-                return true;
-            }
-            
-            return false;
+        // Set options menu click listeners
+        holder.btnEdit.setOnClickListener(v -> {
+            // Handle edit action
+            Toast.makeText(context, "Edit account feature coming soon", Toast.LENGTH_SHORT).show();
         });
         
-        popupMenu.show();
+        holder.btnDelete.setOnClickListener(v -> {
+            // Handle delete action
+            deleteAccount(account);
+        });
+        
+        holder.btnSetPrimary.setOnClickListener(v -> {
+            // Handle set as primary action
+            setPrimaryAccount(account);
+        });
+        
+        // Hide set primary button if already primary
+        holder.btnSetPrimary.setVisibility(account.isPrimary() ? View.GONE : View.VISIBLE);
     }
     
     private void deleteAccount(BankAccount account) {
@@ -191,25 +182,31 @@ public class BankAccountAdapter extends RecyclerView.Adapter<BankAccountAdapter.
     }
 
     static class BankAccountViewHolder extends RecyclerView.ViewHolder {
-        TextView bankNameTextView;
-        TextView accountHolderTextView;
-        TextView accountNumberTextView;
-        TextView ifscCodeTextView;
-        TextView primaryBadgeTextView;
-        TextView verifiedBadgeTextView;
-        ImageView bankIconImageView;
-        ImageView optionsMenuImageView;
+        TextView tvBankName;
+        TextView tvAccountHolder;
+        TextView tvAccountNumber;
+        TextView tvIfscCode;
+        TextView tvPrimaryIndicator;
+        TextView tvVerificationStatus;
+        TextView tvAccountType;
+        TextView tvLastUpdated;
+        ImageView btnEdit;
+        ImageView btnDelete;
+        ImageView btnSetPrimary;
 
         public BankAccountViewHolder(@NonNull View itemView) {
             super(itemView);
-            bankNameTextView = itemView.findViewById(R.id.bankNameTextView);
-            accountHolderTextView = itemView.findViewById(R.id.accountHolderTextView);
-            accountNumberTextView = itemView.findViewById(R.id.accountNumberTextView);
-            ifscCodeTextView = itemView.findViewById(R.id.ifscCodeTextView);
-            primaryBadgeTextView = itemView.findViewById(R.id.primaryBadgeTextView);
-            verifiedBadgeTextView = itemView.findViewById(R.id.verifiedBadgeTextView);
-            bankIconImageView = itemView.findViewById(R.id.bankIconImageView);
-            optionsMenuImageView = itemView.findViewById(R.id.optionsMenuImageView);
+            tvBankName = itemView.findViewById(R.id.tvBankName);
+            tvAccountHolder = itemView.findViewById(R.id.tvAccountHolder);
+            tvAccountNumber = itemView.findViewById(R.id.tvAccountNumber);
+            tvIfscCode = itemView.findViewById(R.id.tvIfscCode);
+            tvPrimaryIndicator = itemView.findViewById(R.id.tvPrimaryIndicator);
+            tvVerificationStatus = itemView.findViewById(R.id.tvVerificationStatus);
+            tvAccountType = itemView.findViewById(R.id.tvAccountType);
+            tvLastUpdated = itemView.findViewById(R.id.tvLastUpdated);
+            btnEdit = itemView.findViewById(R.id.btnEdit);
+            btnDelete = itemView.findViewById(R.id.btnDelete);
+            btnSetPrimary = itemView.findViewById(R.id.btnSetPrimary);
         }
     }
 } 

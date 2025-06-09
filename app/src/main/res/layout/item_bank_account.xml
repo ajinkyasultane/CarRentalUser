@@ -2,148 +2,138 @@
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardView"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="8dp"
-    android:layout_marginTop="4dp"
-    android:layout_marginEnd="8dp"
-    android:layout_marginBottom="4dp"
+    android:layout_margin="4dp"
     app:cardCornerRadius="8dp"
-    app:cardElevation="2dp">
+    app:cardElevation="4dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <!-- Bank Icon -->
-        <ImageView
-            android:id="@+id/bankIconImageView"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="@drawable/circle_background"
-            android:padding="8dp"
-            android:src="@android:drawable/ic_menu_agenda"
-            android:tint="#FFFFFF"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <!-- Bank Name -->
         <TextView
-            android:id="@+id/bankNameTextView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginEnd="8dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="HDFC Bank"
-            android:textColor="#212121"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toStartOf="@+id/primaryBadgeTextView"
-            app:layout_constraintStart_toEndOf="@+id/bankIconImageView"
-            app:layout_constraintTop_toTopOf="parent" />
-
-        <!-- Account Holder Name -->
-        <TextView
-            android:id="@+id/accountHolderTextView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="2dp"
-            android:layout_marginEnd="8dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="John Doe"
-            android:textColor="#757575"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toStartOf="@+id/primaryBadgeTextView"
-            app:layout_constraintStart_toEndOf="@+id/bankIconImageView"
-            app:layout_constraintTop_toBottomOf="@+id/bankNameTextView" />
-
-        <!-- Account Number (masked) -->
-        <TextView
-            android:id="@+id/accountNumberTextView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="2dp"
-            android:layout_marginEnd="8dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:text="XXXX XXXX 1234"
-            android:textColor="#757575"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toStartOf="@+id/primaryBadgeTextView"
-            app:layout_constraintStart_toEndOf="@+id/bankIconImageView"
-            app:layout_constraintTop_toBottomOf="@+id/accountHolderTextView" />
-
-        <!-- IFSC Code -->
-        <TextView
-            android:id="@+id/ifscCodeTextView"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="2dp"
-            android:layout_marginEnd="8dp"
-            android:text="IFSC: HDFC0001234"
-            android:textColor="#757575"
-            android:textSize="12sp"
-            app:layout_constraintEnd_toStartOf="@+id/primaryBadgeTextView"
-            app:layout_constraintStart_toEndOf="@+id/bankIconImageView"
-            app:layout_constraintTop_toBottomOf="@+id/accountNumberTextView" />
-
-        <!-- Primary Badge -->
-        <TextView
-            android:id="@+id/primaryBadgeTextView"
+            android:id="@+id/tvPrimaryIndicator"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/badge_background"
+            android:background="@drawable/primary_indicator_bg"
             android:paddingStart="8dp"
             android:paddingTop="2dp"
             android:paddingEnd="8dp"
             android:paddingBottom="2dp"
-            android:text="Primary"
-            android:textColor="#FFFFFF"
+            android:text="PRIMARY"
+            android:textColor="@android:color/white"
             android:textSize="12sp"
+            android:textStyle="bold"
             android:visibility="gone"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:visibility="visible" />
 
-        <!-- Verified Badge -->
         <TextView
-            android:id="@+id/verifiedBadgeTextView"
+            android:id="@+id/tvBankName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:textColor="@android:color/black"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toStartOf="@+id/tvPrimaryIndicator"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="Bank of Maharashtra" />
+
+        <TextView
+            android:id="@+id/tvAccountHolder"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvBankName"
+            tools:text="Ajinkya Jagannath Sultane" />
+
+        <TextView
+            android:id="@+id/tvAccountNumber"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvAccountHolder"
+            tools:text="XXXX XXXX 6873" />
+
+        <TextView
+            android:id="@+id/tvAccountType"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:background="@drawable/verified_badge_background"
-            android:paddingStart="8dp"
-            android:paddingTop="2dp"
-            android:paddingEnd="8dp"
-            android:paddingBottom="2dp"
-            android:text="Verified"
-            android:textColor="#FFFFFF"
-            android:textSize="12sp"
-            android:visibility="gone"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/primaryBadgeTextView"
-            tools:visibility="visible" />
+            android:textSize="14sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvAccountNumber"
+            tools:text="Savings" />
 
-        <!-- Options Menu -->
-        <ImageView
-            android:id="@+id/optionsMenuImageView"
+        <TextView
+            android:id="@+id/tvIfscCode"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textSize="14sp"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvAccountType"
+            tools:text="IFSC: MAHB0000269" />
+
+        <TextView
+            android:id="@+id/tvLastUpdated"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:textSize="12sp"
+            android:textStyle="italic"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvIfscCode"
+            tools:text="Last updated: 09 Jun 2023" />
+
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:clickable="true"
-            android:focusable="true"
-            android:padding="8dp"
-            android:src="@android:drawable/ic_menu_more"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/tvLastUpdated">
+
+            <ImageButton
+                android:id="@+id/btnSetPrimary"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Set as primary account"
+                android:src="@android:drawable/btn_star" />
+
+            <ImageButton
+                android:id="@+id/btnEdit"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Edit bank account"
+                android:src="@android:drawable/ic_menu_edit" />
+
+            <ImageButton
+                android:id="@+id/btnDelete"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Delete bank account"
+                android:src="@android:drawable/ic_menu_delete" />
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.cardview.widget.CardView> 
