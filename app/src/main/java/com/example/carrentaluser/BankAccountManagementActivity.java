@@ -21,7 +21,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.Query;
+import com.google.firebase.Timestamp;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,7 +55,7 @@ public class BankAccountManagementActivity extends AppCompatActivity {
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
-            getSupportActionBar().setTitle("Manage Bank Accounts");
+            getSupportActionBar().setTitle("Bank Account");
         }
         
         // Initialize views
@@ -86,10 +86,10 @@ public class BankAccountManagementActivity extends AppCompatActivity {
                 intent.putExtra("account_id", accountId);
                 startActivity(intent);
             },
-            // Delete account click listener
-            this::deleteAccount,
-            // Set as primary click listener
-            this::setPrimaryAccount
+            // Delete account click listener - not used in single account mode
+            account -> {},
+            // Set as primary click listener - not used in single account mode
+            account -> {}
         );
         
         accountsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
@@ -99,7 +99,7 @@ public class BankAccountManagementActivity extends AppCompatActivity {
     
     private void loadBankAccounts() {
         if (mAuth.getCurrentUser() == null) {
-            Toast.makeText(this, "Please log in to view your bank accounts", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Please log in to view your bank account", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -107,7 +107,6 @@ public class BankAccountManagementActivity extends AppCompatActivity {
         String userId = mAuth.getCurrentUser().getUid();
         showLoading(true);
         
-        // Use a simpler query that doesn't require a composite index
         db.collection("users").document(userId).collection("bank_accounts")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
@@ -115,6 +114,7 @@ public class BankAccountManagementActivity extends AppCompatActivity {
                     
                     if (queryDocumentSnapshots.isEmpty()) {
                         showEmptyState(true);
+                        addAccountFab.setVisibility(View.VISIBLE);
                         return;
                     }
                     
@@ -124,136 +124,37 @@ public class BankAccountManagementActivity extends AppCompatActivity {
                         if (account != null) {
                             // Ensure ID is set
                             account.setId(document.getId());
+                            // Ensure account is marked as primary
+                            account.setPrimary(true);
                             bankAccounts.add(account);
+                            
+                            // If account is not already marked as primary in the database, update it
+                            if (!account.isPrimary()) {
+                                db.collection("users").document(userId)
+                                  .collection("bank_accounts").document(account.getId())
+                                  .update("isPrimary", true);
+                            }
+                            
+                            break; // Only get the first account
                         }
                     }
                     
-                    // Sort the accounts locally instead of in the query
-                    // Primary accounts first, then by last updated date
-                    bankAccounts.sort((a1, a2) -> {
-                        // First compare by isPrimary (true comes before false)
-                        if (a1.isPrimary() && !a2.isPrimary()) {
-                            return -1;
-                        } else if (!a1.isPrimary() && a2.isPrimary()) {
-                            return 1;
-                        }
-                        
-                        // If both have same primary status, compare by lastUpdated
-                        if (a1.getLastUpdated() != null && a2.getLastUpdated() != null) {
-                            return a2.getLastUpdated().compareTo(a1.getLastUpdated()); // Descending order
-                        }
-                        
-                        return 0;
-                    });
-                    
                     adapter.notifyDataSetChanged();
                     showEmptyState(bankAccounts.isEmpty());
+                    
+                    // Hide the FAB if we already have an account
+                    if (!bankAccounts.isEmpty()) {
+                        addAccountFab.setVisibility(View.GONE);
+                    } else {
+                        addAccountFab.setVisibility(View.VISIBLE);
+                    }
                 })
                 .addOnFailureListener(e -> {
                     showLoading(false);
                     showEmptyState(true);
                     Log.e(TAG, "Error loading bank accounts", e);
-                    Toast.makeText(this, "Failed to load bank accounts: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Failed to load bank account: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
-    }
-    
-    private void deleteAccount(BankAccount account) {
-        if (mAuth.getCurrentUser() == null) {
-            Toast.makeText(this, "You must be logged in to delete an account", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        String userId = mAuth.getCurrentUser().getUid();
-        
-        // Prevent deletion of primary account
-        if (account.isPrimary()) {
-            Toast.makeText(this, "Cannot delete primary account. Set another account as primary first.", Toast.LENGTH_LONG).show();
-            return;
-        }
-        
-        // Show confirmation dialog
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Delete Bank Account")
-            .setMessage("Are you sure you want to delete this bank account?\n\n" +
-                    "Bank: " + account.getBankName() + "\n" +
-                    "Account Number: XXXX XXXX " + account.getAccountNumber().substring(Math.max(0, account.getAccountNumber().length() - 4)))
-            .setPositiveButton("Delete", (dialog, which) -> {
-                // Delete the account from Firestore
-                db.collection("users").document(userId).collection("bank_accounts")
-                        .document(account.getId())
-                        .delete()
-                        .addOnSuccessListener(aVoid -> {
-                            Toast.makeText(this, "Account deleted successfully", Toast.LENGTH_SHORT).show();
-                            
-                            // Remove from local list and update UI
-                            int position = bankAccounts.indexOf(account);
-                            if (position != -1) {
-                                bankAccounts.remove(position);
-                                adapter.notifyItemRemoved(position);
-                                showEmptyState(bankAccounts.isEmpty());
-                            }
-                        })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(this, "Failed to delete account: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        });
-            })
-            .setNegativeButton("Cancel", null)
-            .show();
-    }
-    
-    private void setPrimaryAccount(BankAccount account) {
-        if (mAuth.getCurrentUser() == null) {
-            Toast.makeText(this, "You must be logged in to set a primary account", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        // If already primary, do nothing
-        if (account.isPrimary()) {
-            Toast.makeText(this, "This is already your primary account", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        
-        String userId = mAuth.getCurrentUser().getUid();
-        
-        // Show confirmation dialog
-        new androidx.appcompat.app.AlertDialog.Builder(this)
-            .setTitle("Set as Primary Account")
-            .setMessage("Are you sure you want to set this as your primary bank account?\n\n" +
-                    "Bank: " + account.getBankName() + "\n" +
-                    "Account Number: XXXX XXXX " + account.getAccountNumber().substring(Math.max(0, account.getAccountNumber().length() - 4)))
-            .setPositiveButton("Set as Primary", (dialog, which) -> {
-                // First, find the current primary account and update it
-                for (BankAccount existingAccount : bankAccounts) {
-                    if (existingAccount.isPrimary()) {
-                        // Update the current primary account to not be primary
-                        db.collection("users").document(userId).collection("bank_accounts")
-                                .document(existingAccount.getId())
-                                .update("isPrimary", false);
-                        
-                        // Update the local object
-                        existingAccount.setPrimary(false);
-                    }
-                }
-                
-                // Set the new account as primary
-                db.collection("users").document(userId).collection("bank_accounts")
-                        .document(account.getId())
-                        .update("isPrimary", true)
-                        .addOnSuccessListener(aVoid -> {
-                            Toast.makeText(this, "Primary account updated", Toast.LENGTH_SHORT).show();
-                            
-                            // Update the local object
-                            account.setPrimary(true);
-                            
-                            // Refresh the entire list to ensure correct order
-                            loadBankAccounts();
-                        })
-                        .addOnFailureListener(e -> {
-                            Toast.makeText(this, "Failed to update primary account: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                        });
-            })
-            .setNegativeButton("Cancel", null)
-            .show();
     }
     
     private void showLoading(boolean isLoading) {

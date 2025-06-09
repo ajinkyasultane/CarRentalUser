@@ -19,6 +19,12 @@ import com.example.carrentaluser.models.BankAccount;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.Transaction;
+import com.google.firebase.Timestamp;
+import android.util.Log;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AddBankAccountActivity extends AppCompatActivity {
 
@@ -32,19 +38,19 @@ public class AddBankAccountActivity extends AppCompatActivity {
     private CheckBox cbSetAsPrimary;
     private Button btnSaveAccount;
     private ProgressBar progressBar;
-
+    
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
-
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_bank_account);
-
+        
         // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
-
+        
         // Set up toolbar
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -53,7 +59,7 @@ public class AddBankAccountActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayShowHomeEnabled(true);
             getSupportActionBar().setTitle("Add Bank Account");
         }
-
+        
         // Initialize views
         etAccountHolderName = findViewById(R.id.etAccountHolderName);
         etAccountNumber = findViewById(R.id.etAccountNumber);
@@ -65,6 +71,9 @@ public class AddBankAccountActivity extends AppCompatActivity {
         cbSetAsPrimary = findViewById(R.id.cbSetAsPrimary);
         btnSaveAccount = findViewById(R.id.btnSaveAccount);
         progressBar = findViewById(R.id.progressBar);
+    
+        // Hide the primary checkbox since all accounts are primary in single account mode
+        cbSetAsPrimary.setVisibility(View.GONE);
 
         // Set up account type spinner
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
@@ -75,7 +84,7 @@ public class AddBankAccountActivity extends AppCompatActivity {
         // Set up save button click listener
         btnSaveAccount.setOnClickListener(v -> validateAndSaveAccount());
     }
-
+    
     private void validateAndSaveAccount() {
         // Get input values
         String accountHolderName = etAccountHolderName.getText().toString().trim();
@@ -85,39 +94,86 @@ public class AddBankAccountActivity extends AppCompatActivity {
         String bankName = etBankName.getText().toString().trim();
         String ifscCode = etIfscCode.getText().toString().trim();
         String upiId = etUpiId.getText().toString().trim();
-        boolean isPrimary = cbSetAsPrimary.isChecked();
-
-        // Validate inputs
+        
+        // In single account mode, all accounts are primary
+        boolean isPrimary = true;
+        
+        // Hide the primary checkbox since it's always primary
+        cbSetAsPrimary.setVisibility(View.GONE);
+        
+        // Enhanced validations
+        
+        // Account holder name validation
         if (TextUtils.isEmpty(accountHolderName)) {
             etAccountHolderName.setError("Account holder name is required");
             etAccountHolderName.requestFocus();
             return;
         }
-
+        
+        if (accountHolderName.length() < 3) {
+            etAccountHolderName.setError("Account holder name must be at least 3 characters");
+            etAccountHolderName.requestFocus();
+            return;
+        }
+        
+        if (!accountHolderName.matches("^[a-zA-Z\\s.]+$")) {
+            etAccountHolderName.setError("Account holder name should contain only letters, spaces, and periods");
+            etAccountHolderName.requestFocus();
+            return;
+        }
+        
+        // Account number validation
         if (TextUtils.isEmpty(accountNumber)) {
             etAccountNumber.setError("Account number is required");
             etAccountNumber.requestFocus();
             return;
         }
-
+        
+        if (!accountNumber.matches("^[0-9]{9,18}$")) {
+            etAccountNumber.setError("Account number must be 9-18 digits");
+            etAccountNumber.requestFocus();
+            return;
+        }
+        
         if (!accountNumber.equals(confirmAccountNumber)) {
             etConfirmAccountNumber.setError("Account numbers do not match");
             etConfirmAccountNumber.requestFocus();
             return;
         }
-
+        
+        // Bank name validation
         if (TextUtils.isEmpty(bankName)) {
             etBankName.setError("Bank name is required");
             etBankName.requestFocus();
             return;
         }
-
+        
+        if (bankName.length() < 3) {
+            etBankName.setError("Bank name must be at least 3 characters");
+            etBankName.requestFocus();
+            return;
+        }
+        
+        // IFSC code validation
         if (TextUtils.isEmpty(ifscCode)) {
             etIfscCode.setError("IFSC code is required");
             etIfscCode.requestFocus();
             return;
         }
-
+        
+        if (!ifscCode.matches("^[A-Z]{4}0[A-Z0-9]{6}$")) {
+            etIfscCode.setError("Invalid IFSC code format (e.g., SBIN0123456)");
+            etIfscCode.requestFocus();
+            return;
+        }
+        
+        // UPI ID validation (optional)
+        if (!TextUtils.isEmpty(upiId) && !upiId.matches("^[\\w.-]+@[\\w.-]+$")) {
+            etUpiId.setError("Invalid UPI ID format (e.g., name@bank)");
+            etUpiId.requestFocus();
+            return;
+        }
+        
         // Show progress
         showLoading(true);
 
@@ -128,65 +184,54 @@ public class AddBankAccountActivity extends AppCompatActivity {
             finish();
             return;
         }
-
+        
         String userId = mAuth.getCurrentUser().getUid();
-
-        // If setting as primary, update any existing primary account first
-        if (isPrimary) {
-            db.collection("users").document(userId).collection("bank_accounts")
-                    .whereEqualTo("isPrimary", true)
-                    .get()
-                    .addOnSuccessListener(queryDocumentSnapshots -> {
-                        // Update any existing primary accounts
-                        for (int i = 0; i < queryDocumentSnapshots.size(); i++) {
-                            db.collection("users").document(userId).collection("bank_accounts")
-                                    .document(queryDocumentSnapshots.getDocuments().get(i).getId())
-                                    .update("isPrimary", false);
-                        }
-                        
-                        // Now save the new account
-                        saveAccount(userId, accountHolderName, accountNumber, accountType, bankName, ifscCode, upiId, isPrimary);
+        
+        // First check if the user already has an account
+        db.collection("users").document(userId).collection("bank_accounts")
+            .get()
+            .addOnSuccessListener(queryDocumentSnapshots -> {
+                if (!queryDocumentSnapshots.isEmpty()) {
+                    showLoading(false);
+                    Toast.makeText(this, "You already have a bank account. Only one account is allowed.", Toast.LENGTH_LONG).show();
+                    finish();
+                    return;
+                }
+                
+                // Create new bank account object (always primary)
+                BankAccount account = new BankAccount(accountHolderName, accountNumber, accountType, bankName, ifscCode, true, userId);
+                
+                // Set UPI ID if provided
+                if (!TextUtils.isEmpty(upiId)) {
+                    account.setUpiId(upiId);
+                }
+                
+                // Save the account to Firestore
+                db.collection("users").document(userId).collection("bank_accounts")
+                    .add(account)
+                    .addOnSuccessListener(documentReference -> {
+                        showLoading(false);
+                        Toast.makeText(AddBankAccountActivity.this, "Bank account added successfully", Toast.LENGTH_SHORT).show();
+                        finish();
                     })
                     .addOnFailureListener(e -> {
                         showLoading(false);
-                        Toast.makeText(AddBankAccountActivity.this, "Failed to check existing accounts: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        Log.e("AddBankAccount", "Error adding bank account", e);
+                        Toast.makeText(AddBankAccountActivity.this, "Failed to add bank account: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
-        } else {
-            // If not setting as primary, just save the account
-            saveAccount(userId, accountHolderName, accountNumber, accountType, bankName, ifscCode, upiId, isPrimary);
-        }
+            })
+            .addOnFailureListener(e -> {
+                showLoading(false);
+                Log.e("AddBankAccount", "Error checking account count", e);
+                Toast.makeText(AddBankAccountActivity.this, "Failed to check account limit: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+            });
     }
-
-    private void saveAccount(String userId, String accountHolderName, String accountNumber, 
-                           String accountType, String bankName, String ifscCode, 
-                           String upiId, boolean isPrimary) {
-        // Create new bank account object
-        BankAccount account = new BankAccount(accountHolderName, accountNumber, accountType, bankName, ifscCode, isPrimary, userId);
-        
-        // Set UPI ID if provided
-        if (!TextUtils.isEmpty(upiId)) {
-            account.setUpiId(upiId);
-        }
-
-        // Save to Firestore
-        db.collection("users").document(userId).collection("bank_accounts")
-                .add(account)
-                .addOnSuccessListener(documentReference -> {
-                    showLoading(false);
-                    Toast.makeText(AddBankAccountActivity.this, "Bank account added successfully", Toast.LENGTH_SHORT).show();
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    showLoading(false);
-                    Toast.makeText(AddBankAccountActivity.this, "Failed to add bank account: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
-    }
-
+    
     private void showLoading(boolean isLoading) {
         progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
         btnSaveAccount.setEnabled(!isLoading);
     }
-
+    
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == android.R.id.home) {

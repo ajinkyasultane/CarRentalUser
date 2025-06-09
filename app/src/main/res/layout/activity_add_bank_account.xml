@@ -15,8 +15,21 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="?attr/colorPrimary"
+            android:elevation="4dp"
             android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />
+
+        <TextView
+            android:id="@+id/warningText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/toolbar"
+            android:background="#FFEBEE"
+            android:padding="12dp"
+            android:text="⚠️ WARNING: Please enter your bank details carefully. Incorrect details may result in payment failures or financial loss. All fields are mandatory and must be accurate."
+            android:textColor="#B71C1C"
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
     </com.google.android.material.appbar.AppBarLayout>
 

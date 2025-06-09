@@ -2,6 +2,7 @@ package com.example.carrentaluser;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -74,6 +75,9 @@ public class EditBankAccountActivity extends AppCompatActivity {
         cbSetAsPrimary = findViewById(R.id.cbSetAsPrimary);
         btnUpdateAccount = findViewById(R.id.btnUpdateAccount);
         progressBar = findViewById(R.id.progressBar);
+        
+        // Hide the primary checkbox since we only have one account that is always primary
+        cbSetAsPrimary.setVisibility(View.GONE);
 
         // Set up account type spinner
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
@@ -142,14 +146,6 @@ public class EditBankAccountActivity extends AppCompatActivity {
         if (currentAccount.getUpiId() != null) {
             etUpiId.setText(currentAccount.getUpiId());
         }
-        
-        // Set primary checkbox
-        cbSetAsPrimary.setChecked(currentAccount.isPrimary());
-        
-        // Disable primary checkbox if already primary
-        if (currentAccount.isPrimary()) {
-            cbSetAsPrimary.setEnabled(false);
-        }
     }
 
     private void validateAndUpdateAccount() {
@@ -160,30 +156,99 @@ public class EditBankAccountActivity extends AppCompatActivity {
         String bankName = etBankName.getText().toString().trim();
         String ifscCode = etIfscCode.getText().toString().trim();
         String upiId = etUpiId.getText().toString().trim();
-        boolean isPrimary = cbSetAsPrimary.isChecked();
+        
+        // Always primary in single account mode
+        boolean isPrimary = true;
 
-        // Validate inputs
+        // Enhanced validations
+        
+        // Account holder name validation
         if (TextUtils.isEmpty(accountHolderName)) {
             etAccountHolderName.setError("Account holder name is required");
             etAccountHolderName.requestFocus();
             return;
         }
-
+        
+        if (accountHolderName.length() < 3) {
+            etAccountHolderName.setError("Account holder name must be at least 3 characters");
+            etAccountHolderName.requestFocus();
+            return;
+        }
+        
+        if (!accountHolderName.matches("^[a-zA-Z\\s.]+$")) {
+            etAccountHolderName.setError("Account holder name should contain only letters, spaces, and periods");
+            etAccountHolderName.requestFocus();
+            return;
+        }
+        
+        // Account number validation
         if (TextUtils.isEmpty(accountNumber)) {
             etAccountNumber.setError("Account number is required");
             etAccountNumber.requestFocus();
             return;
         }
-
+        
+        if (!accountNumber.matches("^[0-9]{9,18}$")) {
+            etAccountNumber.setError("Account number must be 9-18 digits");
+            etAccountNumber.requestFocus();
+            return;
+        }
+        
+        // Confirm if account number has been changed
+        if (!accountNumber.equals(currentAccount.getAccountNumber())) {
+            // Show confirmation dialog for account number change
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle("Confirm Account Number Change")
+                .setMessage("You are changing your bank account number. This is a critical field and incorrect information may result in payment failures. Are you sure you want to proceed?")
+                .setPositiveButton("Yes, I'm Sure", (dialog, which) -> {
+                    // Continue with validation and update
+                    continueValidationAndUpdate(accountHolderName, accountNumber, accountType, bankName, ifscCode, upiId);
+                })
+                .setNegativeButton("Cancel", (dialog, which) -> {
+                    // Reset the account number field to original value
+                    etAccountNumber.setText(currentAccount.getAccountNumber());
+                })
+                .setCancelable(false)
+                .show();
+        } else {
+            // Account number hasn't changed, continue with validation
+            continueValidationAndUpdate(accountHolderName, accountNumber, accountType, bankName, ifscCode, upiId);
+        }
+    }
+    
+    private void continueValidationAndUpdate(String accountHolderName, String accountNumber, 
+                                           String accountType, String bankName, 
+                                           String ifscCode, String upiId) {
+        // Bank name validation
         if (TextUtils.isEmpty(bankName)) {
             etBankName.setError("Bank name is required");
             etBankName.requestFocus();
             return;
         }
-
+        
+        if (bankName.length() < 3) {
+            etBankName.setError("Bank name must be at least 3 characters");
+            etBankName.requestFocus();
+            return;
+        }
+        
+        // IFSC code validation
         if (TextUtils.isEmpty(ifscCode)) {
             etIfscCode.setError("IFSC code is required");
             etIfscCode.requestFocus();
+            return;
+        }
+        
+        if (!ifscCode.matches("^[A-Z]{4}0[A-Z0-9]{6}$")) {
+            etIfscCode.setError("Invalid IFSC code format (e.g., SBIN0123456)");
+            etIfscCode.requestFocus();
+            return;
+        }
+        
+        // UPI ID validation (optional)
+        if (!TextUtils.isEmpty(upiId) && !upiId.matches("^[\\w.-]+@[\\w.-]+$")) {
+            etUpiId.setError("Invalid UPI ID format (e.g., name@bank)");
+            etUpiId.requestFocus();
             return;
         }
 
@@ -199,36 +264,11 @@ public class EditBankAccountActivity extends AppCompatActivity {
         }
 
         String userId = mAuth.getCurrentUser().getUid();
-
-        // If setting as primary and wasn't primary before, update any existing primary account first
-        if (isPrimary && !currentAccount.isPrimary()) {
-            db.collection("users").document(userId).collection("bank_accounts")
-                    .whereEqualTo("isPrimary", true)
-                    .get()
-                    .addOnSuccessListener(queryDocumentSnapshots -> {
-                        // Update any existing primary accounts
-                        for (int i = 0; i < queryDocumentSnapshots.size(); i++) {
-                            db.collection("users").document(userId).collection("bank_accounts")
-                                    .document(queryDocumentSnapshots.getDocuments().get(i).getId())
-                                    .update("isPrimary", false);
-                        }
-                        
-                        // Now update the current account
-                        updateAccount(userId, accountHolderName, accountNumber, accountType, bankName, ifscCode, upiId, isPrimary);
-                    })
-                    .addOnFailureListener(e -> {
-                        showLoading(false);
-                        Toast.makeText(EditBankAccountActivity.this, "Failed to check existing accounts: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                    });
-        } else {
-            // If not changing primary status, just update the account
-            updateAccount(userId, accountHolderName, accountNumber, accountType, bankName, ifscCode, upiId, isPrimary);
-        }
+        updateAccount(userId, accountHolderName, accountNumber, accountType, bankName, ifscCode, upiId);
     }
 
     private void updateAccount(String userId, String accountHolderName, String accountNumber, 
-                             String accountType, String bankName, String ifscCode, 
-                             String upiId, boolean isPrimary) {
+                             String accountType, String bankName, String ifscCode, String upiId) {
         // Get reference to the account document
         DocumentReference accountRef = db.collection("users").document(userId)
                 .collection("bank_accounts").document(accountId);
@@ -241,7 +281,7 @@ public class EditBankAccountActivity extends AppCompatActivity {
                 "bankName", bankName,
                 "ifscCode", ifscCode,
                 "upiId", upiId,
-                "isPrimary", isPrimary,
+                "isPrimary", true,  // Always primary in single account mode
                 "lastUpdated", Timestamp.now()
         ).addOnSuccessListener(aVoid -> {
             showLoading(false);

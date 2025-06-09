@@ -9,7 +9,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.cardview.widget.CardView;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.carrentaluser.R;
@@ -32,12 +31,12 @@ public class BankAccountManagementAdapter extends RecyclerView.Adapter<BankAccou
         void onAccountEditClick(String accountId);
     }
 
-    // Interface for delete click events
+    // Interface for delete click events (not used in single account mode)
     public interface OnAccountDeleteListener {
         void onAccountDelete(BankAccount account);
     }
 
-    // Interface for setting primary account
+    // Interface for setting primary account (not used in single account mode)
     public interface OnSetPrimaryListener {
         void onSetPrimary(BankAccount account);
     }
@@ -70,8 +69,8 @@ public class BankAccountManagementAdapter extends RecyclerView.Adapter<BankAccou
         holder.tvAccountType.setText(account.getAccountType());
         holder.tvAccountHolder.setText(account.getAccountHolderName());
         
-        // Show primary badge if this is the primary account
-        holder.tvPrimaryIndicator.setVisibility(account.isPrimary() ? View.VISIBLE : View.GONE);
+        // Always show primary badge in single account mode
+        holder.tvPrimaryIndicator.setVisibility(View.VISIBLE);
         
         // Set IFSC code
         holder.tvIfscCode.setText("IFSC: " + account.getIfscCode());
@@ -91,17 +90,9 @@ public class BankAccountManagementAdapter extends RecyclerView.Adapter<BankAccou
             }
         });
         
-        holder.btnDelete.setOnClickListener(v -> {
-            if (deleteListener != null) {
-                deleteListener.onAccountDelete(account);
-            }
-        });
-        
-        holder.btnSetPrimary.setOnClickListener(v -> {
-            if (setPrimaryListener != null) {
-                setPrimaryListener.onSetPrimary(account);
-            }
-        });
+        // Hide delete and set primary buttons in single account mode
+        holder.btnDelete.setVisibility(View.GONE);
+        holder.btnSetPrimary.setVisibility(View.GONE);
     }
 
     @Override
