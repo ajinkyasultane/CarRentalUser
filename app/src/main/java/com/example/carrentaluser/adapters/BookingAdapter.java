@@ -8,6 +8,7 @@ import android.widget.TextView;
 import android.widget.Button;
 import android.widget.Toast;
 import android.widget.LinearLayout;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
@@ -218,6 +219,7 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
                         Boolean advancePaymentDone = documentSnapshot.getBoolean("advance_payment_done");
                         String paymentId = documentSnapshot.getString("payment_id");
                         Number advanceAmount = documentSnapshot.getLong("advance_payment_amount");
+                        String paymentMethod = documentSnapshot.getString("payment_method");
                         
                         // Update booking status to Cancelled
                         documentSnapshot.getReference().update("status", "Cancelled")
@@ -227,9 +229,13 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
                                 
                                 // Process refund if advance payment was made
                                 if (advancePaymentDone != null && advancePaymentDone && 
-                                    paymentId != null && !paymentId.isEmpty() && 
                                     advanceAmount != null && advanceAmount.intValue() > 0 &&
                                     (refundProcessed == null || !refundProcessed)) {
+                                    
+                                    // Store payment method in the booking object for reference in the refund process
+                                    if (paymentMethod != null) {
+                                        booking.setPayment_method(paymentMethod);
+                                    }
                                     
                                     // Process the refund to wallet
                                     processRefund(holder, booking, paymentId, advanceAmount.intValue());
@@ -309,6 +315,7 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
                 String paymentId = snapshot.getString("payment_id");
                 Number advanceAmount = snapshot.getLong("advance_payment_amount");
                 Boolean refundProcessed = snapshot.getBoolean("refund_processed");
+                String paymentMethod = snapshot.getString("payment_method");
                 
                 // Save the booking ID for future reference
                 String docId = snapshot.getId();
@@ -322,9 +329,13 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
                         
                         // Process refund if advance payment was made
                         if (advancePaymentDone != null && advancePaymentDone && 
-                            paymentId != null && !paymentId.isEmpty() && 
                             advanceAmount != null && advanceAmount.intValue() > 0 &&
                             (refundProcessed == null || !refundProcessed)) {
+                            
+                            // Store payment method in the booking object for reference in the refund process
+                            if (paymentMethod != null) {
+                                booking.setPayment_method(paymentMethod);
+                            }
                             
                             // Process the refund to wallet
                             processRefund(holder, booking, paymentId, advanceAmount.intValue());
@@ -380,6 +391,12 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
                 }
                 
                 Boolean refundProcessed = documentSnapshot.getBoolean("refund_processed");
+                String paymentMethod = documentSnapshot.getString("payment_method");
+                
+                // Store payment method in the booking object if it's not already set
+                if (paymentMethod != null && (booking.getPayment_method() == null || booking.getPayment_method().isEmpty())) {
+                    booking.setPayment_method(paymentMethod);
+                }
                 
                 if (refundProcessed != null && refundProcessed) {
                     // Refund already processed, show message
@@ -435,21 +452,32 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
                         refundData.put("refund_date", new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss", 
                             java.util.Locale.getDefault()).format(new java.util.Date()));
                         refundData.put("refund_status", "Processed");
-                        refundData.put("payment_method", booking.getPayment_method());
+                        
+                        // Get payment method - use the one from booking object or default to "unknown"
+                        String methodToUse = booking.getPayment_method();
+                        if (methodToUse == null || methodToUse.isEmpty()) {
+                            methodToUse = paymentMethod != null ? paymentMethod : "unknown";
+                        }
+                        refundData.put("payment_method", methodToUse);
                         
                         batch.set(db.collection("refunds").document(refundId), refundData);
                         
                         // 3. Create wallet transaction
                         String transactionId = "trans_" + System.currentTimeMillis();
                         Map<String, Object> transactionData = new HashMap<>();
+                        transactionData.put("userId", userId); // Add userId field to ensure it's properly linked
                         transactionData.put("type", "credit");
                         
-                        // Special description for admin rejections vs user cancellations
-                        if (booking.getStatus().equalsIgnoreCase("Rejected")) {
-                            transactionData.put("description", "Refund for rejected booking: " + booking.getCar_name() + " (credited to wallet)");
+                        // Special description based on payment method and status
+                        String description;
+                        if ("wallet".equalsIgnoreCase(methodToUse)) {
+                            description = "Refund to wallet for cancelled booking: " + booking.getCar_name() + " (originally paid from wallet)";
+                        } else if (booking.getStatus().equalsIgnoreCase("Rejected")) {
+                            description = "Refund for rejected booking: " + booking.getCar_name() + " (credited to wallet)";
                         } else {
-                            transactionData.put("description", "Refund credited to wallet for booking: " + booking.getCar_name());
+                            description = "Refund credited to wallet for booking: " + booking.getCar_name();
                         }
+                        transactionData.put("description", description);
                         
                         transactionData.put("amount", amount);
                         transactionData.put("timestamp", new Date());
@@ -457,9 +485,16 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
                         transactionData.put("related_booking_id", bookingId);
                         transactionData.put("refund_id", refundId);
                         
+                        // Add transaction to both the user's transactions subcollection and the main transactions collection
                         batch.set(
                             db.collection("users").document(userId)
                               .collection("transactions").document(transactionId), 
+                            transactionData
+                        );
+                        
+                        // Also add to main transactions collection for better tracking
+                        batch.set(
+                            db.collection("transactions").document(transactionId),
                             transactionData
                         );
                         
@@ -472,12 +507,51 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
                             "credited_to_wallet", true
                         );
                         
+                        // Store payment method for use in success message
+                        final String finalMethodToUse = methodToUse;
+                        
                         // Commit all operations as a batch
                         batch.commit()
                             .addOnSuccessListener(aVoid -> {
-                                // Success - show message
+                                // Double-check that the wallet balance was actually updated
+                                db.collection("users").document(userId).get()
+                                    .addOnSuccessListener(updatedUserDoc -> {
+                                        double updatedBalance = 0;
+                                        if (updatedUserDoc.contains("wallet_balance")) {
+                                            Object balanceObj = updatedUserDoc.get("wallet_balance");
+                                            if (balanceObj instanceof Long) {
+                                                updatedBalance = ((Long) balanceObj).doubleValue();
+                                            } else if (balanceObj instanceof Double) {
+                                                updatedBalance = (Double) balanceObj;
+                                            } else if (balanceObj instanceof Integer) {
+                                                updatedBalance = ((Integer) balanceObj).doubleValue();
+                                            }
+                                        }
+                                        
+                                        // If balance wasn't updated correctly, try again directly
+                                        if (Math.abs(updatedBalance - newBalance) > 0.01) {
+                                            Log.w("BookingAdapter", "Wallet balance wasn't updated correctly. Trying direct update.");
+                                            db.collection("users").document(userId)
+                                                .update("wallet_balance", newBalance)
+                                                .addOnSuccessListener(v -> {
+                                                    Log.d("BookingAdapter", "Wallet balance updated directly: " + newBalance);
+                                                })
+                                                .addOnFailureListener(e -> {
+                                                    Log.e("BookingAdapter", "Failed direct wallet update: " + e.getMessage());
+                                                });
+                                        }
+                                    });
+                                
+                                // Success - show message with payment method info
+                                String successMessage;
+                                if ("wallet".equalsIgnoreCase(finalMethodToUse)) {
+                                    successMessage = "✅ ₹" + amount + " credited to wallet for cancellation of " + booking.getCar_name();
+                                } else {
+                                    successMessage = "✅ ₹" + amount + " refund credited to wallet for cancellation of " + booking.getCar_name();
+                                }
+                                
                                 Toast.makeText(holder.itemView.getContext(),
-                                    "✅ Refund of ₹" + amount + " has been credited to your wallet", 
+                                    successMessage, 
                                     Toast.LENGTH_LONG).show();
                                 
                                 // Update local object
@@ -490,18 +564,27 @@ public class BookingAdapter extends RecyclerView.Adapter<BookingAdapter.ViewHold
                                 Toast.makeText(holder.itemView.getContext(),
                                     "Failed to process refund: " + e.getMessage(), 
                                     Toast.LENGTH_LONG).show();
+                                
+                                // Log the error for debugging
+                                Log.e("BookingAdapter", "Refund batch failed: " + e.getMessage(), e);
                             });
                     })
                     .addOnFailureListener(e -> {
                         Toast.makeText(holder.itemView.getContext(),
                             "Failed to get wallet balance: " + e.getMessage(), 
                             Toast.LENGTH_SHORT).show();
+                        
+                        // Log the error for debugging
+                        Log.e("BookingAdapter", "Failed to get wallet balance: " + e.getMessage(), e);
                     });
             })
             .addOnFailureListener(e -> {
                 Toast.makeText(holder.itemView.getContext(),
                     "Error checking booking: " + e.getMessage(),
                     Toast.LENGTH_SHORT).show();
+                
+                // Log the error for debugging
+                Log.e("BookingAdapter", "Error checking booking: " + e.getMessage(), e);
             });
     }
 

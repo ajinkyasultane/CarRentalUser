@@ -30,6 +30,7 @@ import com.google.firebase.firestore.Query;
 import com.razorpay.Checkout;
 import com.razorpay.PaymentResultListener;
 import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.firestore.WriteBatch;
 
 import org.json.JSONObject;
 
@@ -975,16 +976,133 @@ public class WalletActivity extends AppCompatActivity implements PaymentResultLi
     @Override
     protected void onResume() {
         super.onResume();
-        
         if (mAuth.getCurrentUser() != null) {
             String userId = mAuth.getCurrentUser().getUid();
-            
-            // Refresh wallet data and transactions when returning to the activity
             loadWalletData();
-            fetchAllTransactionsForUser(userId);
             
-            Log.d(TAG, "onResume: Refreshed wallet data and transactions");
+            // Check for any pending refunds that might not have been credited
+            checkPendingRefunds(userId);
+            
+            // Specifically check for wallet payment refunds
+            checkWalletPaymentRefunds(userId);
         }
+    }
+
+    /**
+     * Check for any bookings with refund_processed=true but where the refund might not have been
+     * properly credited to the wallet balance
+     */
+    private void checkPendingRefunds(String userId) {
+        db.collection("bookings")
+            .whereEqualTo("user_id", userId)
+            .whereEqualTo("refund_processed", true)
+            .get()
+            .addOnSuccessListener(queryDocumentSnapshots -> {
+                if (queryDocumentSnapshots.isEmpty()) {
+                    return; // No refunds to process
+                }
+                
+                // For each booking with a processed refund
+                for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                    // Check if the refund was marked as credited to wallet
+                    Boolean creditedToWallet = doc.getBoolean("credited_to_wallet");
+                    
+                    // If not explicitly marked as credited, or if it's false
+                    if (creditedToWallet == null || !creditedToWallet) {
+                        // Get refund amount
+                        Number refundAmount = doc.getLong("refund_amount");
+                        String bookingId = doc.getId();
+                        
+                        if (refundAmount != null && refundAmount.intValue() > 0) {
+                            // Create transaction and update wallet balance
+                            processRefundToWallet(userId, bookingId, refundAmount.intValue(), doc.getString("car_name"));
+                        }
+                    }
+                }
+            })
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "Error checking pending refunds: " + e.getMessage(), e);
+            });
+    }
+    
+    /**
+     * Process a refund to the user's wallet
+     */
+    private void processRefundToWallet(String userId, String bookingId, int amount, String carName) {
+        // Get current wallet balance
+        db.collection("users").document(userId)
+            .get()
+            .addOnSuccessListener(userDoc -> {
+                if (!userDoc.exists()) {
+                    Log.e(TAG, "User document not found when processing refund");
+                    return;
+                }
+                
+                // Get current balance
+                double currentBalance = 0;
+                if (userDoc.contains("wallet_balance")) {
+                    Object balanceObj = userDoc.get("wallet_balance");
+                    if (balanceObj instanceof Long) {
+                        currentBalance = ((Long) balanceObj).doubleValue();
+                    } else if (balanceObj instanceof Double) {
+                        currentBalance = (Double) balanceObj;
+                    } else if (balanceObj instanceof Integer) {
+                        currentBalance = ((Integer) balanceObj).doubleValue();
+                    }
+                }
+                
+                // Calculate new balance
+                final double newBalance = currentBalance + amount;
+                
+                // Create a batch for atomic operations
+                WriteBatch batch = db.batch();
+                
+                // 1. Update wallet balance
+                batch.update(db.collection("users").document(userId), 
+                    "wallet_balance", newBalance);
+                
+                // 2. Create wallet transaction
+                String transactionId = "trans_refund_recovery_" + System.currentTimeMillis();
+                Map<String, Object> transactionData = new HashMap<>();
+                transactionData.put("userId", userId);
+                transactionData.put("type", "credit");
+                transactionData.put("description", "Refund recovery for booking: " + carName);
+                transactionData.put("amount", amount);
+                transactionData.put("timestamp", new Date());
+                transactionData.put("status", "completed");
+                transactionData.put("related_booking_id", bookingId);
+                
+                // Add transaction to both collections
+                batch.set(
+                    db.collection("users").document(userId)
+                      .collection("transactions").document(transactionId), 
+                    transactionData
+                );
+                
+                batch.set(
+                    db.collection("transactions").document(transactionId),
+                    transactionData
+                );
+                
+                // 3. Update booking to mark refund as credited to wallet
+                batch.update(db.collection("bookings").document(bookingId),
+                    "credited_to_wallet", true
+                );
+                
+                // Commit all operations as a batch
+                batch.commit()
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d(TAG, "Recovered refund of " + amount + " successfully credited to wallet");
+                        // Reload wallet data to show updated balance
+                        loadWalletData();
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to process refund recovery: " + e.getMessage(), e);
+                    });
+            })
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "Error getting user data for refund recovery: " + e.getMessage(), e);
+            });
     }
 
     // Helper method to update the transaction list
@@ -1206,5 +1324,138 @@ public class WalletActivity extends AppCompatActivity implements PaymentResultLi
                     Toast.makeText(WalletActivity.this, "Failed to fetch transactions: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                     updateTransactionList(new ArrayList<>()); // Empty list
                 });
+    }
+
+    /**
+     * Check specifically for bookings that were paid with wallet but might not have been refunded properly
+     */
+    private void checkWalletPaymentRefunds(String userId) {
+        db.collection("bookings")
+            .whereEqualTo("user_id", userId)
+            .whereEqualTo("payment_method", "wallet")
+            .whereEqualTo("status", "Cancelled")
+            .get()
+            .addOnSuccessListener(queryDocumentSnapshots -> {
+                if (queryDocumentSnapshots.isEmpty()) {
+                    return; // No wallet payment bookings to process
+                }
+                
+                Log.d(TAG, "Found " + queryDocumentSnapshots.size() + " cancelled wallet payment bookings to check");
+                
+                // For each cancelled booking paid with wallet
+                for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                    // Check if the refund was marked as credited to wallet
+                    Boolean creditedToWallet = doc.getBoolean("credited_to_wallet");
+                    Boolean refundProcessed = doc.getBoolean("refund_processed");
+                    
+                    // If not explicitly marked as credited and refund not processed
+                    if ((creditedToWallet == null || !creditedToWallet) && 
+                        (refundProcessed == null || !refundProcessed)) {
+                        
+                        // Get refund amount (should be the advance payment amount)
+                        Number refundAmount = doc.getLong("advance_payment_amount");
+                        String bookingId = doc.getId();
+                        String carName = doc.getString("car_name");
+                        
+                        if (refundAmount != null && refundAmount.intValue() > 0) {
+                            Log.d(TAG, "Processing missed wallet refund for booking " + bookingId + ", amount: " + refundAmount);
+                            // Create transaction and update wallet balance
+                            processWalletPaymentRefund(userId, bookingId, refundAmount.intValue(), carName != null ? carName : "Unknown car");
+                        }
+                    }
+                }
+            })
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "Error checking wallet payment refunds: " + e.getMessage(), e);
+            });
+    }
+    
+    /**
+     * Process a refund specifically for wallet payments
+     */
+    private void processWalletPaymentRefund(String userId, String bookingId, int amount, String carName) {
+        // Get current wallet balance
+        db.collection("users").document(userId)
+            .get()
+            .addOnSuccessListener(userDoc -> {
+                if (!userDoc.exists()) {
+                    Log.e(TAG, "User document not found when processing wallet payment refund");
+                    return;
+                }
+                
+                // Get current balance
+                double currentBalance = 0;
+                if (userDoc.contains("wallet_balance")) {
+                    Object balanceObj = userDoc.get("wallet_balance");
+                    if (balanceObj instanceof Long) {
+                        currentBalance = ((Long) balanceObj).doubleValue();
+                    } else if (balanceObj instanceof Double) {
+                        currentBalance = (Double) balanceObj;
+                    } else if (balanceObj instanceof Integer) {
+                        currentBalance = ((Integer) balanceObj).doubleValue();
+                    }
+                }
+                
+                // Calculate new balance
+                final double newBalance = currentBalance + amount;
+                
+                // Create a batch for atomic operations
+                WriteBatch batch = db.batch();
+                
+                // 1. Update wallet balance
+                batch.update(db.collection("users").document(userId), 
+                    "wallet_balance", newBalance);
+                
+                // 2. Create wallet transaction
+                String transactionId = "trans_wallet_refund_" + System.currentTimeMillis();
+                Map<String, Object> transactionData = new HashMap<>();
+                transactionData.put("userId", userId);
+                transactionData.put("type", "credit");
+                transactionData.put("description", "Refund for wallet payment: " + carName);
+                transactionData.put("amount", amount);
+                transactionData.put("timestamp", new Date());
+                transactionData.put("status", "completed");
+                transactionData.put("related_booking_id", bookingId);
+                transactionData.put("payment_method", "wallet");
+                
+                // Add transaction to both collections
+                batch.set(
+                    db.collection("users").document(userId)
+                      .collection("transactions").document(transactionId), 
+                    transactionData
+                );
+                
+                batch.set(
+                    db.collection("transactions").document(transactionId),
+                    transactionData
+                );
+                
+                // 3. Update booking to mark refund as processed and credited to wallet
+                batch.update(db.collection("bookings").document(bookingId),
+                    "refund_processed", true,
+                    "credited_to_wallet", true,
+                    "refund_amount", amount,
+                    "refund_date", new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm:ss", 
+                        java.util.Locale.getDefault()).format(new java.util.Date())
+                );
+                
+                // Commit all operations as a batch
+                batch.commit()
+                    .addOnSuccessListener(aVoid -> {
+                        Log.d(TAG, "Wallet payment refund of " + amount + " successfully credited to wallet");
+                        // Show toast notification
+                        Toast.makeText(WalletActivity.this, 
+                            "₹" + amount + " credited to wallet for cancellation of " + carName, 
+                            Toast.LENGTH_SHORT).show();
+                        // Reload wallet data to show updated balance
+                        loadWalletData();
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Failed to process wallet payment refund: " + e.getMessage(), e);
+                    });
+            })
+            .addOnFailureListener(e -> {
+                Log.e(TAG, "Error getting user data for wallet payment refund: " + e.getMessage(), e);
+            });
     }
 } 
