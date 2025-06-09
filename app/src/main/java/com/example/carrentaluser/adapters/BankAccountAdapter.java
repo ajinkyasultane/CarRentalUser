@@ -67,16 +67,6 @@ public class BankAccountAdapter extends RecyclerView.Adapter<BankAccountAdapter.
         // Show primary badge if this is the primary account
         holder.tvPrimaryIndicator.setVisibility(account.isPrimary() ? View.VISIBLE : View.GONE);
         
-        // Show verified badge if the account is verified
-        holder.tvVerificationStatus.setVisibility(account.isVerified() ? View.VISIBLE : View.GONE);
-        if (account.isVerified()) {
-            holder.tvVerificationStatus.setText("Verified");
-            holder.tvVerificationStatus.setTextColor(context.getResources().getColor(R.color.verified_green));
-        } else {
-            holder.tvVerificationStatus.setText("Verification Pending");
-            holder.tvVerificationStatus.setTextColor(context.getResources().getColor(R.color.pending_orange));
-        }
-        
         // Set click listener for the entire item
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
@@ -187,7 +177,6 @@ public class BankAccountAdapter extends RecyclerView.Adapter<BankAccountAdapter.
         TextView tvAccountNumber;
         TextView tvIfscCode;
         TextView tvPrimaryIndicator;
-        TextView tvVerificationStatus;
         TextView tvAccountType;
         TextView tvLastUpdated;
         ImageView btnEdit;
@@ -201,7 +190,6 @@ public class BankAccountAdapter extends RecyclerView.Adapter<BankAccountAdapter.
             tvAccountNumber = itemView.findViewById(R.id.tvAccountNumber);
             tvIfscCode = itemView.findViewById(R.id.tvIfscCode);
             tvPrimaryIndicator = itemView.findViewById(R.id.tvPrimaryIndicator);
-            tvVerificationStatus = itemView.findViewById(R.id.tvVerificationStatus);
             tvAccountType = itemView.findViewById(R.id.tvAccountType);
             tvLastUpdated = itemView.findViewById(R.id.tvLastUpdated);
             btnEdit = itemView.findViewById(R.id.btnEdit);
